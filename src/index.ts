@@ -65,5 +65,5 @@ export function split (sql: string, options?: SplitOptions): string[] {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const multipleStatements = options.multipleStatements ?? false
 
-  return splitQueries(removeComments(sql))
+  return splitQueries(removeComments(sql)).map(v => v.trim())
 }
