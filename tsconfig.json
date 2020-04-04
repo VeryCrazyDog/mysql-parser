@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		// Strict checks
+		"strict": true,
+		// Project options
+		"target": "ES2018",
+		"module": "CommonJS",
+		"rootDir": "./src",
+		"outDir": "./dist",
+		// Advanced
+		"forceConsistentCasingInFileNames": true
+	}
+}
