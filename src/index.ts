@@ -1,5 +1,69 @@
 export interface SplitOptions {
+  retainHashComments?: boolean,
+  retainDoubleDashComments? : boolean,
+  retainCStyleComments?: boolean,
   multipleStatements?: boolean
+}
+
+const REGEX_HASH_COMMENT = /#/
+const REGEX_DOUBLE_DASH_COMMENT = /--\s/
+const REGEX_C_STYLE_COMMENTS = /\/\*/
+const REGEX_DELIMITER = /DELIMITER/
+const REGEX_SINGLE_QUOTE = /'/
+const REGEX_DOUBLE_QUOTE = /"/
+const REGEX_BACKTICK = /`/
+
+function nextIndexOfKeyword(content: string, startIndex : number, currentDelimiter: string) {
+  // TODO Check if currentDelimiter need to be escaped
+  const regex = new RegExp(`(?:${currentDelimiter}|--\\s|#|\\/\\*|DELIMITER)`, 'i');
+  const partialContent = content.slice(startIndex)
+  const match = partialContent.match(regex)
+  let result
+  if (match !== null) {
+    result = {
+      parsed: partialContent.slice(0, match.index),
+      keyword: match[0],
+      nextStartIndex: startIndex + match.index + match[0].length
+    }
+  } else {
+    result = {
+      parsed: partialContent,
+      keyword: null,
+      nextStartIndex: -1
+    }
+  }
+  return result
+}
+
+function parse(content: string) {
+  let nextStartIndex = 0
+  let currentDelimiter = ';'
+  let lastParsed, lastKeyword
+  let result = []
+  do {
+    // console.log(1, {lastParsed, lastKeyword, nextStartIndex})
+    ;({parsed: lastParsed, keyword: lastKeyword, nextStartIndex} = nextIndexOfKeyword(content, nextStartIndex, currentDelimiter))
+    // console.log(2, {lastParsed, lastKeyword, nextStartIndex})
+    if (lastKeyword !== null) {
+      switch (lastKeyword.trim()) {
+        case currentDelimiter:
+          break;
+        case '--':
+        case '#':
+          break;
+        case '/*':
+          break;
+        case 'DELIMITER':
+          break;
+        case null:
+          break;
+        default:
+          break;
+      }
+      result.push(lastParsed)
+    }
+  } while (lastKeyword !== null)
+  return result
 }
 
 // Not able to split long URL
@@ -61,8 +125,9 @@ function splitQueries (sqlMulti: string): string[] {
 
 export function split (sql: string, options?: SplitOptions): string[] {
   options = options ?? {}
-  // TODO Implement options
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const retainHashComments = options.retainHashComments ?? false
+  const retainDoubleDashComments = options.retainDoubleDashComments ?? false
+  const retainCStyleComments = options.retainCStyleComments ?? false
   const multipleStatements = options.multipleStatements ?? false
 
   return splitQueries(removeComments(sql)).map(v => v.trim())
