@@ -1,68 +1,83 @@
+const HASH_COMMENT_START = '#'
+const SINGLE_QUOTE = "'"
+const DOUBLE_QUOTE = '"'
+const BACKTICK = '`'
+const C_STYLE_COMMENT_START = '/*'
+
 export interface SplitOptions {
-  retainHashComments?: boolean,
-  retainDoubleDashComments? : boolean,
-  retainCStyleComments?: boolean,
+  retainHashComments?: boolean
+  retainDoubleDashComments? : boolean
+  retainCStyleComments?: boolean
   multipleStatements?: boolean
 }
 
-const REGEX_HASH_COMMENT = /#/
-const REGEX_DOUBLE_DASH_COMMENT = /--\s/
-const REGEX_C_STYLE_COMMENTS = /\/\*/
-const REGEX_DELIMITER = /DELIMITER/
-const REGEX_SINGLE_QUOTE = /'/
-const REGEX_DOUBLE_QUOTE = /"/
-const REGEX_BACKTICK = /`/
+interface ReadUntilKeyTokenResult {
+  read: string
+  token: string | null
+  unreadStartIndex: number
+}
 
-function nextIndexOfKeyword(content: string, startIndex : number, currentDelimiter: string) {
-  // TODO Check if currentDelimiter need to be escaped
-  const regex = new RegExp(`(?:${currentDelimiter}|--\\s|#|\\/\\*|DELIMITER)`, 'i');
+const regexEscapeSetRegex = /[-\/\\^$*+?.()|[\]{}]/g
+const doubleDashCommentStartRegex = /--\s/
+const cStyleCommentStartRegex = new RegExp(escapeRegex(C_STYLE_COMMENT_START))
+const delimiterStartRegex = /\s*DELIMITER[\t ]+/
+
+function escapeRegex (value: string): string {
+  return value.replace(regexEscapeSetRegex, '\\$&')
+}
+
+function readUntilKeyToken (content: string, startIndex: number, currentDelimiter: string): ReadUntilKeyTokenResult {
+  // TODO Cache the result to avoid re-calcuation
+  const regex = new RegExp('(?:' + [
+    escapeRegex(currentDelimiter),
+    SINGLE_QUOTE,
+    DOUBLE_QUOTE,
+    BACKTICK,
+    doubleDashCommentStartRegex.source,
+    HASH_COMMENT_START,
+    cStyleCommentStartRegex.source,
+    delimiterStartRegex.source
+  ].join('|') + ')', 'i')
   const partialContent = content.slice(startIndex)
   const match = partialContent.match(regex)
   let result
-  if (match !== null) {
+  if (match?.index !== undefined) {
     result = {
-      parsed: partialContent.slice(0, match.index),
-      keyword: match[0],
-      nextStartIndex: startIndex + match.index + match[0].length
+      read: partialContent.slice(0, match.index),
+      token: match[0],
+      unreadStartIndex: startIndex + match.index + match[0].length
     }
   } else {
     result = {
-      parsed: partialContent,
-      keyword: null,
-      nextStartIndex: -1
+      read: partialContent,
+      token: null,
+      unreadStartIndex: -1
     }
   }
   return result
 }
 
-function parse(content: string) {
-  let nextStartIndex = 0
-  let currentDelimiter = ';'
-  let lastParsed, lastKeyword
-  let result = []
-  do {
-    // console.log(1, {lastParsed, lastKeyword, nextStartIndex})
-    ;({parsed: lastParsed, keyword: lastKeyword, nextStartIndex} = nextIndexOfKeyword(content, nextStartIndex, currentDelimiter))
-    // console.log(2, {lastParsed, lastKeyword, nextStartIndex})
-    if (lastKeyword !== null) {
-      switch (lastKeyword.trim()) {
-        case currentDelimiter:
-          break;
-        case '--':
-        case '#':
-          break;
-        case '/*':
-          break;
-        case 'DELIMITER':
-          break;
-        case null:
-          break;
-        default:
-          break;
-      }
-      result.push(lastParsed)
+// TODO Combine with the function above
+function readUntilEndOfSingleQuoteString (content: string, startIndex: number): ReadUntilKeyTokenResult {
+  // TODO Cache the result to avoid re-calcuation
+  // TODO This regex is not enough
+  const regex = /'/
+  const partialContent = content.slice(startIndex)
+  const match = partialContent.match(regex)
+  let result
+  if (match?.index !== undefined) {
+    result = {
+      read: partialContent.slice(0, match.index),
+      token: match[0],
+      unreadStartIndex: startIndex + match.index + match[0].length
     }
-  } while (lastKeyword !== null)
+  } else {
+    result = {
+      read: partialContent,
+      token: null,
+      unreadStartIndex: -1
+    }
+  }
   return result
 }
 
@@ -130,5 +145,51 @@ export function split (sql: string, options?: SplitOptions): string[] {
   const retainCStyleComments = options.retainCStyleComments ?? false
   const multipleStatements = options.multipleStatements ?? false
 
-  return splitQueries(removeComments(sql)).map(v => v.trim())
+  let nextIndex: number = 0
+  const currentDelimiter: string = ';'
+  let lastRead: string = ''
+  let lastKeyToken: string | null = null
+  let currentStatement = ''
+  const result: string[] = []
+  do {
+    ;({
+      read: lastRead,
+      token: lastKeyToken,
+      unreadStartIndex: nextIndex
+    } = readUntilKeyToken(sql, nextIndex, currentDelimiter))
+    if (lastKeyToken !== null) {
+      switch (lastKeyToken.trim()) {
+        case currentDelimiter:
+          result.push(currentStatement + lastRead)
+          currentStatement = ''
+          break
+        case SINGLE_QUOTE:
+          currentStatement += lastRead + lastKeyToken
+          ;({
+            read: lastRead,
+            token: lastKeyToken,
+            unreadStartIndex: nextIndex
+          } = readUntilEndOfSingleQuoteString(sql, nextIndex))
+          currentStatement += lastRead + lastKeyToken
+          break
+        case DOUBLE_QUOTE:
+          break
+        case BACKTICK:
+          break
+        case '--':
+        case HASH_COMMENT_START:
+          break
+        case C_STYLE_COMMENT_START:
+          break
+        case 'DELIMITER':
+          break
+        case null:
+          break
+        default:
+          // This should never happen
+          throw new Error(`Unknown key token '${lastKeyToken}'`)
+      }
+    }
+  } while (lastKeyToken !== null)
+  return result
 }
