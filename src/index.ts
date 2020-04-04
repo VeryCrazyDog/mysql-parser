@@ -1,14 +1,9 @@
-'use strict'
-
-const path = require('path')
-const fs = require('fs')
+export interface SplitOptions {
+  multipleStatements?: boolean
+}
 
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql-pass.ts#L156
-/**
- * @param {string} sql - a SQL string
- * @return {string} - the SQL string without comments
- */
-function removeComments (sql) {
+function removeComments (sql: string) {
   const quotes = /^((?:[^"`']*?(?:(?:"(?:[^"]|\\")*?(?<!\\)")|(?:'(?:[^']|\\')*?(?<!\\)')|(?:`(?:[^`]|\\`)*?(?<!\\)`)))*?[^"`']*?)/
   const cStyleComments = new RegExp(quotes.source + '/\\*.*?\\*/')
   const doubleDashComments = new RegExp(quotes.source + '--(?:(?:[ \t]+.*(\r\n|\n|\r)?)|(\r\n|\n|\r)|$)')
@@ -20,14 +15,10 @@ function removeComments (sql) {
 }
 
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql-pass.ts#L122
-/**
- * @param {string} sql - queries
- * @return {string[]}
- */
-function splitQueries (sqlMulti) {
+function splitQueries (sqlMulti: string) {
   const quotes = /^((?:[^"`']*?(?:(?:"(?:[^"]|\\")*?(?<!\\)")|(?:'(?:[^']|\\')*?(?<!\\)')|(?:`(?:[^`]|\\`)*?(?<!\\)`)))*?[^"`']*?)/
   const delimiterRegex = /^(?:\r\n|[ \t\r\n])*DELIMITER[\t ]*(.*?)(?:\r\n|\n|\r|$)/i
-  const queries = []; let match = []; let delimiter = ';'
+  const queries = []; let match: any = []; let delimiter = ';'
   let splitRegex = new RegExp(quotes.source + delimiter)
   while (match !== null) {
     const delimiterCommand = sqlMulti.match(delimiterRegex)
@@ -54,11 +45,9 @@ function splitQueries (sqlMulti) {
   })
 }
 
-;(async () => {
-  const sql = await fs.promises.readFile(path.join(__dirname, 'test', 'data', 'school.sql'), 'utf8')
-  const statements = splitQueries(removeComments(sql))
-  for (const stat of statements) {
-    console.log('------------------------- BREAK -------------------------')
-    console.log(stat.trim())
-  }
-})().catch(err => console.log(err.stack))
+export function split (sql: string, options?: SplitOptions): string[] {
+  options = options ?? {}
+  const multipleStatements = options.multipleStatements ?? false
+
+  return splitQueries(removeComments(sql))
+}
