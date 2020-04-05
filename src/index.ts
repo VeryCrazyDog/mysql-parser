@@ -117,10 +117,21 @@ function discard (context: SplitExecutionContext, nextUnreadIndex: number): void
   }
 }
 
-function pushSplitResult (context: SplitExecutionContext): void {
+function publishStatement (context: SplitExecutionContext): void {
   const currentStatement = context.currentStatement.trim()
   if (currentStatement !== '') {
-    context.splitResult.push(currentStatement)
+    if (!context.multipleStatements) {
+      context.splitResult.push(currentStatement)
+    } else {
+      if (context.currentDelimiter === SEMICOLON) {
+        if (context.splitResult.length === 0) {
+          context.splitResult.push('')
+        }
+        context.splitResult[context.splitResult.length - 1] += currentStatement + SEMICOLON + '\n'
+      } else {
+        context.splitResult.push(currentStatement)
+      }
+    }
   }
   context.currentStatement = ''
 }
@@ -129,7 +140,7 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: F
   switch (readResult.exp?.trim()) {
     case context.currentDelimiter:
       read(context, readResult.expIndex, readResult.unreadStartIndex)
-      pushSplitResult(context)
+      publishStatement(context)
       break
     case SINGLE_QUOTE:
     case DOUBLE_QUOTE:
@@ -170,7 +181,7 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: F
     case undefined:
     case null:
       read(context, readResult.unreadStartIndex)
-      pushSplitResult(context)
+      publishStatement(context)
       break
     default:
       // This should never happen
@@ -199,7 +210,11 @@ export function split (sql: string, options?: SplitOptions): string[] {
     lastUnreadLength = context.unread.length
     readResult = findKeyToken(context.unread, context.currentDelimiter)
     handleKeyTokenReadResult(context, readResult)
-  // Length checking prevent infinite loop by returning incorrect result
-  } while (context.unread !== '' && lastUnreadLength !== context.unread.length)
+    // Prevent infinite loop by returning incorrect result
+    if (lastUnreadLength === context.unread.length) {
+      read(context, context.unread.length)
+    }
+  } while (context.unread !== '')
+  publishStatement(context)
   return context.splitResult
 }
