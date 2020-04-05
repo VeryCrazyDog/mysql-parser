@@ -142,13 +142,13 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: R
     case DOUBLE_DASH_COMMENT_START: {
       read(context, readResult.expIndex, readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
       const readCommentResult = readUntilNewLine(context.unread)
-      discard(context, readCommentResult.unreadStartIndex)
+      discard(context, readCommentResult.expIndex)
       break
     }
     case HASH_COMMENT_START: {
       read(context, readResult.expIndex, readResult.unreadStartIndex)
       const readCommentResult = readUntilNewLine(context.unread)
-      discard(context, readCommentResult.unreadStartIndex)
+      discard(context, readCommentResult.expIndex)
       break
     }
     case C_STYLE_COMMENT_START: {
