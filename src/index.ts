@@ -22,7 +22,7 @@ interface SplitExecutionContext {
 interface FindExpResult {
   expIndex: number
   exp: string | null
-  unreadStartIndex: number
+  nextIndex: number
 }
 
 const regexEscapeSetRegex = /[-/\\^$*+?.()|[\]{}]/g
@@ -67,13 +67,13 @@ function findExp (content: string, regex: RegExp): FindExpResult {
     result = {
       expIndex: match.index,
       exp: match[0],
-      unreadStartIndex: match.index + match[0].length
+      nextIndex: match.index + match[0].length
     }
   } else {
     result = {
       expIndex: -1,
       exp: null,
-      unreadStartIndex: content.length
+      nextIndex: content.length
     }
   }
   return result
@@ -130,47 +130,47 @@ function publishStatement (context: SplitExecutionContext): void {
   context.currentStatement = ''
 }
 
-function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: FindExpResult): void {
-  switch (readResult.exp?.trim()) {
+function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: FindExpResult): void {
+  switch (findResult.exp?.trim()) {
     case context.currentDelimiter:
-      read(context, readResult.expIndex, readResult.unreadStartIndex)
+      read(context, findResult.expIndex, findResult.nextIndex)
       publishStatement(context)
       break
     case SINGLE_QUOTE:
     case DOUBLE_QUOTE:
     case BACKTICK: {
-      read(context, readResult.unreadStartIndex)
-      const readQuoteResult = findEndQuote(context.unread, readResult.exp)
-      read(context, readQuoteResult.unreadStartIndex)
+      read(context, findResult.nextIndex)
+      const findQuoteResult = findEndQuote(context.unread, findResult.exp)
+      read(context, findQuoteResult.nextIndex)
       break
     }
     case DOUBLE_DASH_COMMENT_START: {
-      read(context, readResult.expIndex, readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
-      const readCommentResult = findExp(context.unread, newLineRegex)
-      discard(context, readCommentResult.expIndex)
+      read(context, findResult.expIndex, findResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
+      const findCommentResult = findExp(context.unread, newLineRegex)
+      discard(context, findCommentResult.expIndex)
       break
     }
     case HASH_COMMENT_START: {
-      read(context, readResult.expIndex, readResult.unreadStartIndex)
-      const readCommentResult = findExp(context.unread, newLineRegex)
-      discard(context, readCommentResult.expIndex)
+      read(context, findResult.expIndex, findResult.nextIndex)
+      const findCommentResult = findExp(context.unread, newLineRegex)
+      discard(context, findCommentResult.expIndex)
       break
     }
     case C_STYLE_COMMENT_START: {
-      if (['!', '+'].includes(context.unread[readResult.unreadStartIndex])) {
+      if (['!', '+'].includes(context.unread[findResult.nextIndex])) {
         // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
-        read(context, readResult.unreadStartIndex)
-        const readCommentResult = findExp(context.unread, cStyleCommentEndRegex)
-        read(context, readCommentResult.unreadStartIndex)
+        read(context, findResult.nextIndex)
+        const findCommentResult = findExp(context.unread, cStyleCommentEndRegex)
+        read(context, findCommentResult.nextIndex)
       } else {
-        read(context, readResult.expIndex, readResult.unreadStartIndex)
-        const readCommentResult = findExp(context.unread, cStyleCommentEndRegex)
-        discard(context, readCommentResult.unreadStartIndex)
+        read(context, findResult.expIndex, findResult.nextIndex)
+        const findCommentResult = findExp(context.unread, cStyleCommentEndRegex)
+        discard(context, findCommentResult.nextIndex)
       }
       break
     }
     case DELIMITER_KEYWORD: {
-      read(context, readResult.expIndex, readResult.unreadStartIndex)
+      read(context, findResult.expIndex, findResult.nextIndex)
       const matched = context.unread.match(delimiterTokenRegex)
       if (matched?.index !== undefined) {
         context.currentDelimiter = matched[0].trim()
@@ -182,12 +182,12 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: F
     }
     case undefined:
     case null:
-      read(context, readResult.unreadStartIndex)
+      read(context, findResult.nextIndex)
       publishStatement(context)
       break
     default:
       // This should never happen
-      throw new Error(`Unknown token '${readResult.exp ?? '(null)'}'`)
+      throw new Error(`Unknown token '${findResult.exp ?? '(null)'}'`)
   }
 }
 
@@ -202,16 +202,16 @@ export function split (sql: string, options?: SplitOptions): string[] {
     currentStatement: '',
     splitResult: []
   }
-  let readResult: FindExpResult = {
+  let findResult: FindExpResult = {
     expIndex: -1,
     exp: null,
-    unreadStartIndex: 0
+    nextIndex: 0
   }
   let lastUnreadLength
   do {
     lastUnreadLength = context.unread.length
-    readResult = findKeyToken(context.unread, context.currentDelimiter)
-    handleKeyTokenReadResult(context, readResult)
+    findResult = findKeyToken(context.unread, context.currentDelimiter)
+    handleKeyTokenFindResult(context, findResult)
     // Prevent infinite loop by returning incorrect result
     if (lastUnreadLength === context.unread.length) {
       read(context, context.unread.length)
