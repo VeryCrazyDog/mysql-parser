@@ -178,3 +178,27 @@ test('should drop statement after delimiter command', t => {
   const output = split('DELIMITER $$  SELECT 2;')
   t.deepEqual(output, [])
 })
+
+test.skip('should combine compatible statements', t => {
+  const output = split([
+    'SELECT 1;',
+    'SELECT 2;',
+    'DELIMITER ;;',
+    'SELECT 3;;',
+    'DELIMITER $$',
+    'SELECT 4$$',
+    'DELIMITER ;',
+    "SELECT '--- 5; ---';",
+    'SELECT 6;'
+  ].join('\n'), { multipleStatements: true })
+  t.deepEqual(output, [
+    [
+      'SELECT 1;',
+      'SELECT 2;',
+      'SELECT 3;',
+      'SELECT 4;',
+      "SELECT '--- 5; ---';",
+      'SELECT 6;'
+    ].join('\n')
+  ])
+})

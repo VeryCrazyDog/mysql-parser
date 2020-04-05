@@ -1,6 +1,6 @@
 {
 	"name": "mysql-parser",
-	"version": "0.1.0-dev",
+	"version": "1.0.0",
 	"description": "Parser for MySQL statements",
 	"engines": {
 		"node": ">= 10.*"
