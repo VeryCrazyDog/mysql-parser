@@ -111,6 +111,11 @@ function discard (context: SplitExecutionContext, nextUnreadIndex: number): void
   }
 }
 
+function discardTillNewLine (context: SplitExecutionContext): void {
+  const findResult = findExp(context.unread, newLineRegex)
+  discard(context, findResult.expIndex)
+}
+
 function publishStatement (context: SplitExecutionContext): void {
   const currentStatement = context.currentStatement.trim()
   if (currentStatement !== '') {
@@ -144,18 +149,14 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
       read(context, findQuoteResult.nextIndex)
       break
     }
-    case DOUBLE_DASH_COMMENT_START: {
+    case DOUBLE_DASH_COMMENT_START:
       read(context, findResult.expIndex, findResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
-      const findCommentResult = findExp(context.unread, newLineRegex)
-      discard(context, findCommentResult.expIndex)
+      discardTillNewLine(context)
       break
-    }
-    case HASH_COMMENT_START: {
+    case HASH_COMMENT_START:
       read(context, findResult.expIndex, findResult.nextIndex)
-      const findCommentResult = findExp(context.unread, newLineRegex)
-      discard(context, findCommentResult.expIndex)
+      discardTillNewLine(context)
       break
-    }
     case C_STYLE_COMMENT_START: {
       if (['!', '+'].includes(context.unread[findResult.nextIndex])) {
         // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
@@ -176,8 +177,7 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
         context.currentDelimiter = matched[0].trim()
         discard(context, matched[0].length)
       }
-      const findNewLineResult = findExp(context.unread, newLineRegex)
-      discard(context, findNewLineResult.expIndex)
+      discardTillNewLine(context)
       break
     }
     case undefined:
