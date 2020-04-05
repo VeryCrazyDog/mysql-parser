@@ -1,8 +1,10 @@
-const HASH_COMMENT_START = '#'
 const SINGLE_QUOTE = "'"
 const DOUBLE_QUOTE = '"'
 const BACKTICK = '`'
+const DOUBLE_DASH_COMMENT_START = '--'
+const HASH_COMMENT_START = '#'
 const C_STYLE_COMMENT_START = '/*'
+const DELIMITER_KEYWORD = 'DELIMITER'
 
 export interface SplitOptions {
   retainHashComments?: boolean
@@ -19,9 +21,9 @@ interface ReadUntilExpResult {
 }
 
 const regexEscapeSetRegex = /[-/\\^$*+?.()|[\]{}]/g
-const doubleDashCommentStartRegex = /--\s/
-const cStyleCommentStartRegex = new RegExp(escapeRegex(C_STYLE_COMMENT_START))
-const delimiterStartRegex = /\s*DELIMITER[\t ]+/
+const doubleDashCommentStartRegex = /--[ \f\n\r\t\v]/
+const cStyleCommentStartRegex = /\/\*/
+const delimiterStartRegex = /[\n\r]+[ \f\t\v]*DELIMITER[ \t]+/i
 
 function escapeRegex (value: string): string {
   return value.replace(regexEscapeSetRegex, '\\$&')
@@ -137,48 +139,53 @@ export function split (sql: string, options?: SplitOptions): string[] {
   let nextIndex: number = 0
   const currentDelimiter: string = ';'
   let lastRead: string = ''
-  let lastKeyToken: string | null = null
+  let lastTokenIndex: number = -1
+  let lastToken: string | null = null
   let currentStatement = ''
   const result: string[] = []
   do {
     ;({
       read: lastRead,
-      exp: lastKeyToken,
+      expIndex: lastTokenIndex,
+      exp: lastToken,
       unreadStartIndex: nextIndex
     } = readUntilKeyToken(sql, nextIndex, currentDelimiter))
-    if (lastKeyToken !== null) {
-      switch (lastKeyToken.trim()) {
+    if (lastToken !== null) {
+      switch (lastToken.trim()) {
         case currentDelimiter:
           result.push(currentStatement + lastRead)
           currentStatement = ''
           break
         case SINGLE_QUOTE:
-          currentStatement += lastRead + lastKeyToken
+          currentStatement += lastRead + lastToken
           ;({
             read: lastRead,
-            exp: lastKeyToken,
+            exp: lastToken,
             unreadStartIndex: nextIndex
           } = readUntilEndOfSingleQuoteString(sql, nextIndex))
-          currentStatement += lastRead + lastKeyToken
+          currentStatement += lastRead
+          if (lastToken !== null) {
+            currentStatement += lastToken
+          }
           break
         case DOUBLE_QUOTE:
           break
         case BACKTICK:
           break
-        case '--':
+        case DOUBLE_DASH_COMMENT_START:
         case HASH_COMMENT_START:
           break
         case C_STYLE_COMMENT_START:
           break
-        case 'DELIMITER':
+        case DELIMITER_KEYWORD:
           break
         case null:
           break
         default:
           // This should never happen
-          throw new Error(`Unknown key token '${lastKeyToken}'`)
+          throw new Error(`Unknown token '${lastToken}'`)
       }
     }
-  } while (lastKeyToken !== null)
+  } while (lastToken !== null)
   return result
 }
