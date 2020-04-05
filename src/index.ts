@@ -11,13 +11,14 @@ export interface SplitOptions {
   multipleStatements?: boolean
 }
 
-interface ReadUntilKeyTokenResult {
+interface ReadUntilExpResult {
   read: string
-  token: string | null
+  expIndex: number
+  exp: string | null
   unreadStartIndex: number
 }
 
-const regexEscapeSetRegex = /[-\/\\^$*+?.()|[\]{}]/g
+const regexEscapeSetRegex = /[-/\\^$*+?.()|[\]{}]/g
 const doubleDashCommentStartRegex = /--\s/
 const cStyleCommentStartRegex = new RegExp(escapeRegex(C_STYLE_COMMENT_START))
 const delimiterStartRegex = /\s*DELIMITER[\t ]+/
@@ -26,7 +27,29 @@ function escapeRegex (value: string): string {
   return value.replace(regexEscapeSetRegex, '\\$&')
 }
 
-function readUntilKeyToken (content: string, startIndex: number, currentDelimiter: string): ReadUntilKeyTokenResult {
+function readUntilExp (content: string, startIndex: number, regex: RegExp): ReadUntilExpResult {
+  const contentToRead = content.slice(startIndex)
+  const match = contentToRead.match(regex)
+  let result: ReadUntilExpResult
+  if (match?.index !== undefined) {
+    result = {
+      read: contentToRead.slice(0, match.index),
+      expIndex: startIndex + match.index,
+      exp: match[0],
+      unreadStartIndex: startIndex + match.index + match[0].length
+    }
+  } else {
+    result = {
+      read: contentToRead,
+      expIndex: -1,
+      exp: null,
+      unreadStartIndex: -1
+    }
+  }
+  return result
+}
+
+function readUntilKeyToken (content: string, startIndex: number, currentDelimiter: string): ReadUntilExpResult {
   // TODO Cache the result to avoid re-calcuation
   const regex = new RegExp('(?:' + [
     escapeRegex(currentDelimiter),
@@ -38,47 +61,13 @@ function readUntilKeyToken (content: string, startIndex: number, currentDelimite
     cStyleCommentStartRegex.source,
     delimiterStartRegex.source
   ].join('|') + ')', 'i')
-  const partialContent = content.slice(startIndex)
-  const match = partialContent.match(regex)
-  let result
-  if (match?.index !== undefined) {
-    result = {
-      read: partialContent.slice(0, match.index),
-      token: match[0],
-      unreadStartIndex: startIndex + match.index + match[0].length
-    }
-  } else {
-    result = {
-      read: partialContent,
-      token: null,
-      unreadStartIndex: -1
-    }
-  }
-  return result
+  return readUntilExp(content, startIndex, regex)
 }
 
-// TODO Combine with the function above
-function readUntilEndOfSingleQuoteString (content: string, startIndex: number): ReadUntilKeyTokenResult {
+function readUntilEndOfSingleQuoteString (content: string, startIndex: number): ReadUntilExpResult {
   // TODO Cache the result to avoid re-calcuation
-  // TODO This regex is not enough
-  const regex = /'/
-  const partialContent = content.slice(startIndex)
-  const match = partialContent.match(regex)
-  let result
-  if (match?.index !== undefined) {
-    result = {
-      read: partialContent.slice(0, match.index),
-      token: match[0],
-      unreadStartIndex: startIndex + match.index + match[0].length
-    }
-  } else {
-    result = {
-      read: partialContent,
-      token: null,
-      unreadStartIndex: -1
-    }
-  }
-  return result
+  const regex = /(?<!\\)'/
+  return readUntilExp(content, startIndex, regex)
 }
 
 // Not able to split long URL
@@ -154,7 +143,7 @@ export function split (sql: string, options?: SplitOptions): string[] {
   do {
     ;({
       read: lastRead,
-      token: lastKeyToken,
+      exp: lastKeyToken,
       unreadStartIndex: nextIndex
     } = readUntilKeyToken(sql, nextIndex, currentDelimiter))
     if (lastKeyToken !== null) {
@@ -167,7 +156,7 @@ export function split (sql: string, options?: SplitOptions): string[] {
           currentStatement += lastRead + lastKeyToken
           ;({
             read: lastRead,
-            token: lastKeyToken,
+            exp: lastKeyToken,
             unreadStartIndex: nextIndex
           } = readUntilEndOfSingleQuoteString(sql, nextIndex))
           currentStatement += lastRead + lastKeyToken
