@@ -12,15 +12,17 @@ export interface SplitOptions {
   multipleStatements?: boolean
 }
 
+interface SplitResult {
+  statement: string
+  allowMultiStatement: boolean
+}
+
 interface SplitExecutionContext {
   multipleStatements: boolean
   unread: string
   currentDelimiter: string
   currentStatement: string
-  splitResult: Array<{
-    statement: string
-    allowMultiStatement: boolean
-  }>
+  output: SplitResult[]
 }
 
 interface FindExpResult {
@@ -120,36 +122,40 @@ function discardTillNewLine (context: SplitExecutionContext): void {
   discard(context, findResult.expIndex)
 }
 
+function appendStatement (splitResult: SplitResult[], currentStatement: string): void {
+  if (splitResult.length === 0) {
+    splitResult.push({
+      statement: '',
+      allowMultiStatement: true
+    })
+  }
+  const lastSplitResult = splitResult[splitResult.length - 1]
+  if (lastSplitResult.allowMultiStatement) {
+    if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
+      lastSplitResult.statement += LINE_FEED
+    }
+    lastSplitResult.statement += currentStatement + SEMICOLON
+  } else {
+    splitResult.push({
+      statement: currentStatement + SEMICOLON,
+      allowMultiStatement: true
+    })
+  }
+}
+
 function publishStatement (context: SplitExecutionContext): void {
   const currentStatement = context.currentStatement.trim()
   if (currentStatement !== '') {
     if (!context.multipleStatements) {
-      context.splitResult.push({
+      context.output.push({
         statement: currentStatement,
         allowMultiStatement: (context.currentDelimiter === SEMICOLON)
       })
     } else {
       if (context.currentDelimiter === SEMICOLON) {
-        if (context.splitResult.length === 0) {
-          context.splitResult.push({
-            statement: '',
-            allowMultiStatement: true
-          })
-        }
-        const lastSplitResult = context.splitResult[context.splitResult.length - 1]
-        if (lastSplitResult.allowMultiStatement) {
-          if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
-            lastSplitResult.statement += LINE_FEED
-          }
-          lastSplitResult.statement += currentStatement + SEMICOLON
-        } else {
-          context.splitResult.push({
-            statement: currentStatement + SEMICOLON,
-            allowMultiStatement: true
-          })
-        }
+        appendStatement(context.output, currentStatement)
       } else {
-        context.splitResult.push({
+        context.output.push({
           statement: currentStatement,
           allowMultiStatement: false
         })
@@ -224,7 +230,7 @@ export function split (sql: string, options?: SplitOptions): string[] {
     unread: sql,
     currentDelimiter: SEMICOLON,
     currentStatement: '',
-    splitResult: []
+    output: []
   }
   let findResult: FindExpResult = {
     expIndex: -1,
@@ -242,5 +248,5 @@ export function split (sql: string, options?: SplitOptions): string[] {
     }
   } while (context.unread !== '')
   publishStatement(context)
-  return context.splitResult.map(v => v.statement)
+  return context.output.map(v => v.statement)
 }
