@@ -202,6 +202,8 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
     }
     case DELIMITER_KEYWORD: {
       read(context, findResult.expIndex, findResult.nextIndex)
+      // MySQL client will return `DELIMITER cannot contain a backslash character` if backslash is used
+      // Shall we reject backslash as well?
       const matched = context.unread.match(delimiterTokenRegex)
       if (matched?.index !== undefined) {
         context.currentDelimiter = matched[0].trim()
