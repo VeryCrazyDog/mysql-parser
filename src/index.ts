@@ -203,7 +203,16 @@ export function split (sql: string, options?: SplitOptions): string[] {
         case C_STYLE_COMMENT_START:
           if (['!', '+'].includes(sql[lastTokenIndex + C_STYLE_COMMENT_START.length])) {
             // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
-            // TODO Implement
+            currentStatement += lastToken
+            ;({
+              read: lastRead,
+              exp: lastToken,
+              unreadStartIndex: nextIndex
+            } = readUntilCStyleCommentEnd(sql, nextIndex))
+            currentStatement += lastRead
+            if (lastToken !== null) {
+              currentStatement += lastToken
+            }
           } else {
             ;({
               unreadStartIndex: nextIndex

@@ -141,6 +141,26 @@ test('should handle special C style comment ending correctly', t => {
     '/* xxxx */',
     'SELECT 4;'
   ]
-  const output = split(input.join(';\n') + ';')
+  const output = split(input.join('\n'))
   t.deepEqual(output, ['SELECT 4'])
+})
+
+test('should retain C style comments start with `/*!`', t => {
+  const input = [
+    "SHOW VARIABLES LIKE '%character_set_client%'",
+    '/*!40101 SET character_set_client = big5 */',
+    "SHOW VARIABLES LIKE '%character_set_client%'"
+  ]
+  const output = split(input.join(';\n') + ';')
+  t.deepEqual(output, input)
+})
+
+test('should retain C style comments start with `/*+`', t => {
+  const input = [
+    "SHOW VARIABLES LIKE '%character_set_client%'",
+    'SELECT /*+ BKA(t1) */ 1 FROM dual',
+    "SHOW VARIABLES LIKE '%character_set_client%'"
+  ]
+  const output = split(input.join(';\n') + ';')
+  t.deepEqual(output, input)
 })
