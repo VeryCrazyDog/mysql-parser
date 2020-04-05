@@ -5,6 +5,7 @@ const DOUBLE_DASH_COMMENT_START = '--'
 const HASH_COMMENT_START = '#'
 const C_STYLE_COMMENT_START = '/*'
 const SEMICOLON = ';'
+const LINE_FEED = '\n'
 const DELIMITER_KEYWORD = 'DELIMITER'
 
 export interface SplitOptions {
@@ -16,7 +17,10 @@ interface SplitExecutionContext {
   unread: string
   currentDelimiter: string
   currentStatement: string
-  splitResult: string[]
+  splitResult: Array<{
+    statement: string
+    allowMultiStatement: boolean
+  }>
 }
 
 interface FindExpResult {
@@ -120,15 +124,35 @@ function publishStatement (context: SplitExecutionContext): void {
   const currentStatement = context.currentStatement.trim()
   if (currentStatement !== '') {
     if (!context.multipleStatements) {
-      context.splitResult.push(currentStatement)
+      context.splitResult.push({
+        statement: currentStatement,
+        allowMultiStatement: (context.currentDelimiter === SEMICOLON)
+      })
     } else {
       if (context.currentDelimiter === SEMICOLON) {
         if (context.splitResult.length === 0) {
-          context.splitResult.push('')
+          context.splitResult.push({
+            statement: '',
+            allowMultiStatement: true
+          })
         }
-        context.splitResult[context.splitResult.length - 1] += currentStatement + SEMICOLON + '\n'
+        const lastSplitResult = context.splitResult[context.splitResult.length - 1]
+        if (lastSplitResult.allowMultiStatement) {
+          if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
+            lastSplitResult.statement += LINE_FEED
+          }
+          lastSplitResult.statement += currentStatement + SEMICOLON
+        } else {
+          context.splitResult.push({
+            statement: currentStatement + SEMICOLON,
+            allowMultiStatement: true
+          })
+        }
       } else {
-        context.splitResult.push(currentStatement)
+        context.splitResult.push({
+          statement: currentStatement,
+          allowMultiStatement: false
+        })
       }
     }
   }
@@ -218,5 +242,5 @@ export function split (sql: string, options?: SplitOptions): string[] {
     }
   } while (context.unread !== '')
   publishStatement(context)
-  return context.splitResult
+  return context.splitResult.map(v => v.statement)
 }
