@@ -18,28 +18,20 @@ test.before(async t => {
 })
 
 // Test cases
-test.skip('should have correct 1st statement', t => {
-  t.is(statements[0], [
-    '-- -----------------------------------------------------------------------------',
-    '-- Create database',
-    '-- -----------------------------------------------------------------------------',
-    'DROP DATABASE IF EXISTS school'
-  ].join('\r\n'))
+test('should have correct 1st statement', t => {
+  t.is(statements[0], 'DROP DATABASE IF EXISTS school')
 })
 
-test.skip('should have correct 2nd statement', t => {
+test('should have correct 2nd statement', t => {
   t.is(statements[1], 'CREATE DATABASE school DEFAULT CHARACTER SET utf8mb4')
 })
 
-test.skip('should have correct 3rd statement', t => {
+test('should have correct 3rd statement', t => {
   t.is(statements[2], 'USE school')
 })
 
-test.skip('should have correct 4th statement', t => {
+test('should have correct 4th statement', t => {
   t.is(statements[3], [
-    '-- -----------------------------------------------------------------------------',
-    '-- Create tables',
-    '-- -----------------------------------------------------------------------------',
     'CREATE TABLE students (',
     '  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,',
     '  name VARCHAR(50) NOT NULL,',
@@ -55,7 +47,7 @@ test.skip('should have correct 4th statement', t => {
   ].join('\r\n'))
 })
 
-test.skip('should have correct 5th statement', t => {
+test('should have correct 5th statement', t => {
   t.is(statements[4], [
     'CREATE TABLE students_history (',
     '  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,',

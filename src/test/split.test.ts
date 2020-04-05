@@ -46,7 +46,7 @@ test('test double dash comments, with nested and escaped quotes', t => {
 
 // eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L41
-test.skip('test c-style comments, with nested and escaped quotes', t => {
+test('test c-style comments, with nested and escaped quotes', t => {
   const output = split([
     '',
     `    SELECT col FROM /* comment */ \`table1\` AS ' \\' "\` -/* not a " comment */ \`';`,
@@ -76,7 +76,7 @@ test('test hash comments, with nested and escaped quotes', t => {
 
 // eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L61
-test.skip('test misc comments, with nested and escaped quotes', t => {
+test('test misc comments, with nested and escaped quotes', t => {
   const output = split([
     '',
     `    SELECT col FROM #comment`,
@@ -129,4 +129,18 @@ test('should split correctly when SQL command in quoted field name', t => {
   ]
   const output = split(input.join(';\n') + ';')
   t.deepEqual(output, input)
+})
+
+test('should handle special C style comment ending correctly', t => {
+  const input = [
+    '/*',
+    'SELECT 1;',
+    'SELECT 2;',
+    '/*/',
+    'SELECT 3;',
+    '/* xxxx */',
+    'SELECT 4;'
+  ]
+  const output = split(input.join(';\n') + ';')
+  t.deepEqual(output, ['SELECT 4'])
 })

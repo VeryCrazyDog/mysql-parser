@@ -20,8 +20,9 @@ interface ReadUntilExpResult {
 const regexEscapeSetRegex = /[-/\\^$*+?.()|[\]{}]/g
 const doubleDashCommentStartRegex = /--[ \f\n\r\t\v]/
 const cStyleCommentStartRegex = /\/\*/
-const delimiterStartRegex = /[\n\r]+[ \f\t\v]*DELIMITER[ \t]+/i
+const cStyleCommentEndRegex = /(?<!\/)\*\//
 const newLineRegex = /[\r\n]+/
+const delimiterStartRegex = /[\n\r]+[ \f\t\v]*DELIMITER[ \t]+/i
 
 function escapeRegex (value: string): string {
   return value.replace(regexEscapeSetRegex, '\\$&')
@@ -75,6 +76,10 @@ function readUntilEndQuote (content: string, startIndex: number, quote: string):
 
 function readUntilNewLine (content: string, startIndex: number): ReadUntilExpResult {
   return readUntilExp(content, startIndex, newLineRegex)
+}
+
+function readUntilCStyleCommentEnd (content: string, startIndex: number): ReadUntilExpResult {
+  return readUntilExp(content, startIndex, cStyleCommentEndRegex)
 }
 
 // Not able to split long URL
@@ -153,10 +158,10 @@ export function split (sql: string, options?: SplitOptions): string[] {
       unreadStartIndex: nextIndex
     } = readUntilKeyToken(sql, nextIndex, currentDelimiter))
     if (lastToken !== null) {
+      currentStatement += lastRead
       switch (lastToken.trim()) {
         case currentDelimiter:
         case null:
-          currentStatement += lastRead
           currentStatement = currentStatement.trim()
           if (currentStatement !== '') {
             result.push(currentStatement)
@@ -166,7 +171,7 @@ export function split (sql: string, options?: SplitOptions): string[] {
         case SINGLE_QUOTE:
         case DOUBLE_QUOTE:
         case BACKTICK:
-          currentStatement += lastRead + lastToken
+          currentStatement += lastToken
           ;({
             read: lastRead,
             exp: lastToken,
@@ -178,7 +183,6 @@ export function split (sql: string, options?: SplitOptions): string[] {
           }
           break
         case DOUBLE_DASH_COMMENT_START:
-          currentStatement += lastRead
           ;({
             exp: lastToken,
             unreadStartIndex: nextIndex
@@ -188,7 +192,6 @@ export function split (sql: string, options?: SplitOptions): string[] {
           }
           break
         case HASH_COMMENT_START:
-          currentStatement += lastRead
           ;({
             exp: lastToken,
             unreadStartIndex: nextIndex
@@ -198,6 +201,14 @@ export function split (sql: string, options?: SplitOptions): string[] {
           }
           break
         case C_STYLE_COMMENT_START:
+          if (['!', '+'].includes(sql[lastTokenIndex + C_STYLE_COMMENT_START.length])) {
+            // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
+            // TODO Implement
+          } else {
+            ;({
+              unreadStartIndex: nextIndex
+            } = readUntilCStyleCommentEnd(sql, nextIndex))
+          }
           break
         case DELIMITER_KEYWORD:
           break
