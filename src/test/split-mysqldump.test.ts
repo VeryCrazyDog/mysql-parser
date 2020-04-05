@@ -57,3 +57,572 @@ test('should have correct 9th statement', t => {
 test('should have correct 10th statement', t => {
   t.is(statements[9], '/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */')
 })
+
+test('should have correct 11th statement', t => {
+  t.is(statements[10], 'DROP TABLE IF EXISTS `students`')
+})
+
+test('should have correct 12th statement', t => {
+  t.is(statements[11], '/*!40101 SET @saved_cs_client     = @@character_set_client */')
+})
+
+test('should have correct 13th statement', t => {
+  t.is(statements[12], '/*!40101 SET character_set_client = utf8 */')
+})
+
+test('should have correct 14th statement', t => {
+  t.is(statements[13], [
+    'CREATE TABLE `students` (',
+    '  `id` int(11) NOT NULL AUTO_INCREMENT,',
+    '  `name` varchar(50) NOT NULL,',
+    '  `code` varchar(10) NOT NULL,',
+    '  `gender` char(1) DEFAULT NULL,',
+    '  `birthday` date DEFAULT NULL,',
+    "  `version` int(11) NOT NULL DEFAULT '1',",
+    '  `created_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+    '  `modified_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
+    '  PRIMARY KEY (`id`),',
+    '  UNIQUE KEY `uk_code` (`code`),',
+    '  KEY `ix_name` (`name`)',
+    ') ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4'
+  ].join('\r\n'))
+})
+
+test('should have correct 15th statement', t => {
+  t.is(statements[14], '/*!40101 SET character_set_client = @saved_cs_client */')
+})
+
+test('should have correct 16th statement', t => {
+  t.is(statements[15], 'LOCK TABLES `students` WRITE')
+})
+
+test('should have correct 17th statement', t => {
+  t.is(statements[16], '/*!40000 ALTER TABLE `students` DISABLE KEYS */')
+})
+
+test('should have correct 18th statement', t => {
+  t.is(statements[17], [
+    'INSERT INTO `students` VALUES ',
+    "(1,'Amy','student1','F','1980-01-01',1,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(2,'Benny','student2','M','1981-02-02',1,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(3,'Carmen','student3','F','1981-03-03',1,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(4,'David','student4','M','1980-04-04',2,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(5,'Edith','student5','F','1983-05-05',1,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(6,'Fanny','student6','F','1980-06-06',1,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(7,'Gabriel','student7','M','1981-07-07',1,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(8,'Henry','student8','M','1980-08-08',1,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(9,'Ivan','student9','M','1982-09-09',1,'2020-04-04 10:25:28','2020-04-04 10:25:28'),",
+    "(10,'Janice','student10','F','1983-10-10',1,'2020-04-04 10:25:28','2020-04-04 10:25:28')"
+  ].join(''))
+})
+
+test('should have correct 19th statement', t => {
+  t.is(statements[18], '/*!40000 ALTER TABLE `students` ENABLE KEYS */')
+})
+
+test('should have correct 20th statement', t => {
+  t.is(statements[19], 'UNLOCK TABLES')
+})
+
+test('should have correct 21th statement', t => {
+  t.is(statements[20], '/*!50003 SET @saved_cs_client      = @@character_set_client */')
+})
+
+test('should have correct 22th statement', t => {
+  t.is(statements[21], '/*!50003 SET @saved_cs_results     = @@character_set_results */')
+})
+
+test('should have correct 23th statement', t => {
+  t.is(statements[22], '/*!50003 SET @saved_col_connection = @@collation_connection */')
+})
+
+test('should have correct 24th statement', t => {
+  t.is(statements[23], '/*!50003 SET character_set_client  = big5 */')
+})
+
+test('should have correct 25th statement', t => {
+  t.is(statements[24], '/*!50003 SET character_set_results = big5 */')
+})
+
+test('should have correct 26th statement', t => {
+  t.is(statements[25], '/*!50003 SET collation_connection  = big5_chinese_ci */')
+})
+
+test('should have correct 27th statement', t => {
+  t.is(statements[26], '/*!50003 SET @saved_sql_mode       = @@sql_mode */')
+})
+
+test('should have correct 28th statement', t => {
+  t.is(statements[27], [
+    '/*!50003 SET sql_mode              = ',
+    "'ONLY_FULL_GROUP_BY,",
+    'STRICT_TRANS_TABLES,',
+    'NO_ZERO_IN_DATE,',
+    'NO_ZERO_DATE,',
+    'ERROR_FOR_DIVISION_BY_ZERO,',
+    "NO_ENGINE_SUBSTITUTION' */"].join(''))
+})
+
+test('should have correct 29th statement', t => {
+  t.is(statements[28], [
+    [
+      '/*!50003 CREATE*/ ',
+      '/*!50017 DEFINER=`skip-grants user`@`skip-grants host`*/ ',
+      '/*!50003 TRIGGER students_after_insert AFTER INSERT ON students FOR EACH ROW'
+    ].join(''),
+    'BEGIN',
+    '  INSERT INTO students_history SET',
+    '    student_id = NEW.id,',
+    '    version = NEW.version,',
+    "    action = 'A',",
+    '    action_time = NEW.created_time,',
+    '    name = NEW.name,',
+    '    code = NEW.code,',
+    '    gender = NEW.gender,',
+    '    birthday = NEW.birthday;',
+    'END */'
+  ].join('\r\n'))
+})
+
+test('should have correct 30th statement', t => {
+  t.is(statements[29], '/*!50003 SET sql_mode              = @saved_sql_mode */')
+})
+
+test('should have correct 31th statement', t => {
+  t.is(statements[30], '/*!50003 SET character_set_client  = @saved_cs_client */')
+})
+
+test('should have correct 32th statement', t => {
+  t.is(statements[31], '/*!50003 SET character_set_results = @saved_cs_results */')
+})
+
+test('should have correct 33th statement', t => {
+  t.is(statements[32], '/*!50003 SET collation_connection  = @saved_col_connection */')
+})
+
+test('should have correct 34th statement', t => {
+  t.is(statements[33], '/*!50003 SET @saved_cs_client      = @@character_set_client */')
+})
+
+test('should have correct 35th statement', t => {
+  t.is(statements[34], '/*!50003 SET @saved_cs_results     = @@character_set_results */')
+})
+
+test('should have correct 36th statement', t => {
+  t.is(statements[35], '/*!50003 SET @saved_col_connection = @@collation_connection */')
+})
+
+test('should have correct 37th statement', t => {
+  t.is(statements[36], '/*!50003 SET character_set_client  = big5 */')
+})
+
+test('should have correct 38th statement', t => {
+  t.is(statements[37], '/*!50003 SET character_set_results = big5 */')
+})
+
+test('should have correct 39th statement', t => {
+  t.is(statements[38], '/*!50003 SET collation_connection  = big5_chinese_ci */')
+})
+
+test('should have correct 40th statement', t => {
+  t.is(statements[39], '/*!50003 SET @saved_sql_mode       = @@sql_mode */')
+})
+
+test('should have correct 41th statement', t => {
+  t.is(statements[40], [
+    '/*!50003 SET sql_mode              = ',
+    "'ONLY_FULL_GROUP_BY,",
+    'STRICT_TRANS_TABLES,',
+    'NO_ZERO_IN_DATE,',
+    'NO_ZERO_DATE,',
+    'ERROR_FOR_DIVISION_BY_ZERO,',
+    "NO_ENGINE_SUBSTITUTION' */"].join(''))
+})
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 CREATE*/ /*!50017 DEFINER=`skip-grants user`@`skip-grants host`*/ /*!50003 TRIGGER students_after_update AFTER UPDATE ON students FOR EACH ROW")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "BEGIN")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "	INSERT INTO students_history SET")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		student_id = NEW.id,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		version = NEW.version,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		action = 'M',")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		action_time = NEW.modified_time,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		name = NEW.name,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		code = NEW.code,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		gender = NEW.gender,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		birthday = NEW.birthday;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "END */;;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "DELIMITER ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET sql_mode              = @saved_sql_mode */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET character_set_client  = @saved_cs_client */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET character_set_results = @saved_cs_results */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET collation_connection  = @saved_col_connection */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET @saved_cs_client      = @@character_set_client */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET @saved_cs_results     = @@character_set_results */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET @saved_col_connection = @@collation_connection */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET character_set_client  = big5 */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET character_set_results = big5 */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET collation_connection  = big5_chinese_ci */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "DELIMITER ;;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 CREATE*/ /*!50017 DEFINER=`skip-grants user`@`skip-grants host`*/ /*!50003 TRIGGER students_after_delete AFTER DELETE ON students FOR EACH ROW")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "BEGIN")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "	INSERT INTO students_history SET")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		student_id = OLD.id,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		version = OLD.version + 1,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		action = 'D',")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		action_time = CURRENT_TIMESTAMP,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		name = OLD.name,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		code = OLD.code,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		gender = OLD.gender,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "		birthday = OLD.birthday;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "END */;;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "DELIMITER ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET sql_mode              = @saved_sql_mode */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET character_set_client  = @saved_cs_client */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET character_set_results = @saved_cs_results */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!50003 SET collation_connection  = @saved_col_connection */ ;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "--")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "-- Table structure for table `students_history`")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "--")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "DROP TABLE IF EXISTS `students_history`;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40101 SET @saved_cs_client     = @@character_set_client */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40101 SET character_set_client = utf8 */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "CREATE TABLE `students_history` (")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `id` int(11) NOT NULL AUTO_INCREMENT,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `student_id` int(11) NOT NULL,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `version` int(11) NOT NULL,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `action` char(1) NOT NULL,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `action_time` timestamp NOT NULL,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `name` varchar(50) NOT NULL,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `code` varchar(10) NOT NULL,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `gender` char(1) DEFAULT NULL,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `birthday` date DEFAULT NULL,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `created_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  `modified_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  PRIMARY KEY (`id`),")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "  UNIQUE KEY `uk_student_id_version` (`student_id`,`version`)")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], ") ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40101 SET character_set_client = @saved_cs_client */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "--")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "-- Dumping data for table `students_history`")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "--")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "LOCK TABLES `students_history` WRITE;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40000 ALTER TABLE `students_history` DISABLE KEYS */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "INSERT INTO `students_history` VALUES (1,1,1,'A','2020-04-04 10:25:28','Amy','student1','F','1980-01-01','2020-04-04 10:25:28','2020-04-04 10:25:28'),(2,2,1,'A','2020-04-04 10:25:28','Benny','student2','M','1981-02-02','2020-04-04 10:25:28','2020-04-04 10:25:28'),(3,3,1,'A','2020-04-04 10:25:28','Carmen','student3','F','1981-03-03','2020-04-04 10:25:28','2020-04-04 10:25:28'),(4,4,1,'A','2020-04-04 10:25:28','David','student4',NULL,'1980-04-04','2020-04-04 10:25:28','2020-04-04 10:25:28'),(5,5,1,'A','2020-04-04 10:25:28','Edith','student5','F','1983-05-05','2020-04-04 10:25:28','2020-04-04 10:25:28'),(6,6,1,'A','2020-04-04 10:25:28','Fanny','student6','F','1980-06-06','2020-04-04 10:25:28','2020-04-04 10:25:28'),(7,7,1,'A','2020-04-04 10:25:28','Gabriel','student7','M','1981-07-07','2020-04-04 10:25:28','2020-04-04 10:25:28'),(8,8,1,'A','2020-04-04 10:25:28','Henry','student8','M','1980-08-08','2020-04-04 10:25:28','2020-04-04 10:25:28'),(9,9,1,'A','2020-04-04 10:25:28','Ivan','student9','M','1982-09-09','2020-04-04 10:25:28','2020-04-04 10:25:28'),(10,10,1,'A','2020-04-04 10:25:28','Janice','student10','F','1983-10-10','2020-04-04 10:25:28','2020-04-04 10:25:28'),(11,4,2,'M','2020-04-04 10:25:28','David','student4','M','1980-04-04','2020-04-04 10:25:28','2020-04-04 10:25:28');")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40000 ALTER TABLE `students_history` ENABLE KEYS */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "UNLOCK TABLES;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "--")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "-- Dumping events for database 'school'")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "--")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "--")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "-- Dumping routines for database 'school'")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "--")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "-- Dump completed on 2020-04-04 18:26:22")
+// })
+
+// test('should have correct xth statement', t => {
+//   t.is(statements[x], "")
+// })

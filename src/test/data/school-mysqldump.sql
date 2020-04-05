@@ -2,7 +2,7 @@
 --
 -- Host: localhost    Database: school
 -- ------------------------------------------------------
--- Server version	5.7.29
+-- Server version  5.7.29
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -57,15 +57,15 @@ UNLOCK TABLES;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`skip-grants user`@`skip-grants host`*/ /*!50003 TRIGGER students_after_insert AFTER INSERT ON students FOR EACH ROW
 BEGIN
-	INSERT INTO students_history SET
-		student_id = NEW.id,
-		version = NEW.version,
-		action = 'A',
-		action_time = NEW.created_time,
-		name = NEW.name,
-		code = NEW.code,
-		gender = NEW.gender,
-		birthday = NEW.birthday;
+  INSERT INTO students_history SET
+    student_id = NEW.id,
+    version = NEW.version,
+    action = 'A',
+    action_time = NEW.created_time,
+    name = NEW.name,
+    code = NEW.code,
+    gender = NEW.gender,
+    birthday = NEW.birthday;
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -83,15 +83,15 @@ DELIMITER ;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`skip-grants user`@`skip-grants host`*/ /*!50003 TRIGGER students_after_update AFTER UPDATE ON students FOR EACH ROW
 BEGIN
-	INSERT INTO students_history SET
-		student_id = NEW.id,
-		version = NEW.version,
-		action = 'M',
-		action_time = NEW.modified_time,
-		name = NEW.name,
-		code = NEW.code,
-		gender = NEW.gender,
-		birthday = NEW.birthday;
+  INSERT INTO students_history SET
+    student_id = NEW.id,
+    version = NEW.version,
+    action = 'M',
+    action_time = NEW.modified_time,
+    name = NEW.name,
+    code = NEW.code,
+    gender = NEW.gender,
+    birthday = NEW.birthday;
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -109,15 +109,15 @@ DELIMITER ;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`skip-grants user`@`skip-grants host`*/ /*!50003 TRIGGER students_after_delete AFTER DELETE ON students FOR EACH ROW
 BEGIN
-	INSERT INTO students_history SET
-		student_id = OLD.id,
-		version = OLD.version + 1,
-		action = 'D',
-		action_time = CURRENT_TIMESTAMP,
-		name = OLD.name,
-		code = OLD.code,
-		gender = OLD.gender,
-		birthday = OLD.birthday;
+  INSERT INTO students_history SET
+    student_id = OLD.id,
+    version = OLD.version + 1,
+    action = 'D',
+    action_time = CURRENT_TIMESTAMP,
+    name = OLD.name,
+    code = OLD.code,
+    gender = OLD.gender,
+    birthday = OLD.birthday;
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
