@@ -65,3 +65,20 @@ test('should have correct 5th statement', t => {
     ')'
   ].join('\r\n'))
 })
+
+test.skip('should have correct 6th statement', t => {
+  t.is(statements[5], [
+    'CREATE  TRIGGER students_after_insert AFTER INSERT ON students FOR EACH ROW',
+    'BEGIN',
+    '  INSERT INTO students_history SET',
+    '    student_id = NEW.id,',
+    '    version = NEW.version,',
+    "    action = 'A',",
+    '    action_time = NEW.created_time,',
+    '    name = NEW.name,',
+    '    code = NEW.code,',
+    '    gender = NEW.gender,',
+    '    birthday = NEW.birthday;',
+    'END'
+  ].join('\r\n'))
+})
