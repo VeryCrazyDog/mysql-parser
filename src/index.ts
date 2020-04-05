@@ -4,6 +4,7 @@ const BACKTICK = '`'
 const DOUBLE_DASH_COMMENT_START = '--'
 const HASH_COMMENT_START = '#'
 const C_STYLE_COMMENT_START = '/*'
+const SEMICOLON = ';'
 const DELIMITER_KEYWORD = 'DELIMITER'
 
 export interface SplitOptions {
@@ -18,14 +19,36 @@ interface ReadUntilExpResult {
 }
 
 const regexEscapeSetRegex = /[-/\\^$*+?.()|[\]{}]/g
+const singleQuoteStringEndRegex = /(?<!\\)'/
+const doubleQuoteStringEndRegex = /(?<!\\)"/
+const backtickQuoteEndRegex = /(?<!`)`(?!`)/
 const doubleDashCommentStartRegex = /--[ \f\n\r\t\v]/
 const cStyleCommentStartRegex = /\/\*/
 const cStyleCommentEndRegex = /(?<!\/)\*\//
 const newLineRegex = /[\r\n]+/
 const delimiterStartRegex = /[\n\r]+[ \f\t\v]*DELIMITER[ \t]+/i
+const semicolonKeyTokenRegex = buildKeyTokenRegex(SEMICOLON)
+const quoteEndRegexDict: Record<string, RegExp> = {
+  [SINGLE_QUOTE]: singleQuoteStringEndRegex,
+  [DOUBLE_QUOTE]: doubleQuoteStringEndRegex,
+  [BACKTICK]: backtickQuoteEndRegex
+}
 
 function escapeRegex (value: string): string {
   return value.replace(regexEscapeSetRegex, '\\$&')
+}
+
+function buildKeyTokenRegex (delimiter: string): RegExp {
+  return new RegExp('(?:' + [
+    escapeRegex(delimiter),
+    SINGLE_QUOTE,
+    DOUBLE_QUOTE,
+    BACKTICK,
+    doubleDashCommentStartRegex.source,
+    HASH_COMMENT_START,
+    cStyleCommentStartRegex.source,
+    delimiterStartRegex.source
+  ].join('|') + ')', 'i')
 }
 
 function readUntilExp (content: string, startIndex: number, regex: RegExp): ReadUntilExpResult {
@@ -51,27 +74,20 @@ function readUntilExp (content: string, startIndex: number, regex: RegExp): Read
 }
 
 function readUntilKeyToken (content: string, startIndex: number, currentDelimiter: string): ReadUntilExpResult {
-  // TODO Cache the result to avoid re-calcuation
-  const regex = new RegExp('(?:' + [
-    escapeRegex(currentDelimiter),
-    SINGLE_QUOTE,
-    DOUBLE_QUOTE,
-    BACKTICK,
-    doubleDashCommentStartRegex.source,
-    HASH_COMMENT_START,
-    cStyleCommentStartRegex.source,
-    delimiterStartRegex.source
-  ].join('|') + ')', 'i')
+  let regex
+  if (currentDelimiter === SEMICOLON) {
+    regex = semicolonKeyTokenRegex
+  } else {
+    regex = buildKeyTokenRegex(currentDelimiter)
+  }
   return readUntilExp(content, startIndex, regex)
 }
 
 function readUntilEndQuote (content: string, startIndex: number, quote: string): ReadUntilExpResult {
-  if (![SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK].includes(quote)) {
-    throw new TypeError('Incorrect quote supplied')
+  if (!(quote in quoteEndRegexDict)) {
+    throw new TypeError(`Incorrect quote ${quote} supplied`)
   }
-  // TODO Cache the result to avoid re-calcuation
-  const regex = new RegExp(/(?<!\\)/.source + quote)
-  return readUntilExp(content, startIndex, regex)
+  return readUntilExp(content, startIndex, quoteEndRegexDict[quote])
 }
 
 function readUntilNewLine (content: string, startIndex: number): ReadUntilExpResult {
@@ -87,7 +103,7 @@ export function split (sql: string, options?: SplitOptions): string[] {
   const multipleStatements = options.multipleStatements ?? false
 
   let nextIndex: number = 0
-  const currentDelimiter: string = ';'
+  const currentDelimiter: string = SEMICOLON
   let lastRead: string = ''
   let lastTokenIndex: number = -1
   let lastToken: string | null = null

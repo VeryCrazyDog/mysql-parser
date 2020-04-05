@@ -164,3 +164,12 @@ test('should retain C style comments start with `/*+`', t => {
   const output = split(input.join(';\n') + ';')
   t.deepEqual(output, input)
 })
+
+test('should handle double backtick', t => {
+  const input = [
+    'CREATE TABLE `a``b` (`c"d` INT)',
+    'CREATE TABLE `a````b` (`c"d` INT)'
+  ]
+  const output = split(input.join(';\n') + ';')
+  t.deepEqual(output, input)
+})
