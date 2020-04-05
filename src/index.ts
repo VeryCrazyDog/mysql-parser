@@ -19,7 +19,7 @@ interface SplitExecutionContext {
   splitResult: string[]
 }
 
-interface ReadUntilExpResult {
+interface FindExpResult {
   expIndex: number
   exp: string | null
   unreadStartIndex: number
@@ -58,9 +58,9 @@ function buildKeyTokenRegex (delimiter: string): RegExp {
   ].join('|') + ')', 'i')
 }
 
-function readUntilExp (content: string, regex: RegExp): ReadUntilExpResult {
+function findExp (content: string, regex: RegExp): FindExpResult {
   const match = content.match(regex)
-  let result: ReadUntilExpResult
+  let result: FindExpResult
   if (match?.index !== undefined) {
     result = {
       expIndex: match.index,
@@ -77,29 +77,29 @@ function readUntilExp (content: string, regex: RegExp): ReadUntilExpResult {
   return result
 }
 
-function readUntilKeyToken (content: string, currentDelimiter: string): ReadUntilExpResult {
+function findKeyToken (content: string, currentDelimiter: string): FindExpResult {
   let regex
   if (currentDelimiter === SEMICOLON) {
     regex = semicolonKeyTokenRegex
   } else {
     regex = buildKeyTokenRegex(currentDelimiter)
   }
-  return readUntilExp(content, regex)
+  return findExp(content, regex)
 }
 
-function readUntilEndQuote (content: string, quote: string): ReadUntilExpResult {
+function findEndQuote (content: string, quote: string): FindExpResult {
   if (!(quote in quoteEndRegexDict)) {
     throw new TypeError(`Incorrect quote ${quote} supplied`)
   }
-  return readUntilExp(content, quoteEndRegexDict[quote])
+  return findExp(content, quoteEndRegexDict[quote])
 }
 
-function readUntilNewLine (content: string): ReadUntilExpResult {
-  return readUntilExp(content, newLineRegex)
+function findNewLine (content: string): FindExpResult {
+  return findExp(content, newLineRegex)
 }
 
-function readUntilCStyleCommentEnd (content: string): ReadUntilExpResult {
-  return readUntilExp(content, cStyleCommentEndRegex)
+function findCStyleCommentEnd (content: string): FindExpResult {
+  return findExp(content, cStyleCommentEndRegex)
 }
 
 function read (context: SplitExecutionContext, readToIndex: number, nextUnreadIndex?: number): void {
@@ -125,7 +125,7 @@ function pushSplitResult (context: SplitExecutionContext): void {
   context.currentStatement = ''
 }
 
-function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: ReadUntilExpResult): void {
+function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: FindExpResult): void {
   switch (readResult.exp?.trim()) {
     case context.currentDelimiter:
       read(context, readResult.expIndex, readResult.unreadStartIndex)
@@ -135,19 +135,19 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: R
     case DOUBLE_QUOTE:
     case BACKTICK: {
       read(context, readResult.unreadStartIndex)
-      const readQuoteResult = readUntilEndQuote(context.unread, readResult.exp)
+      const readQuoteResult = findEndQuote(context.unread, readResult.exp)
       read(context, readQuoteResult.unreadStartIndex)
       break
     }
     case DOUBLE_DASH_COMMENT_START: {
       read(context, readResult.expIndex, readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
-      const readCommentResult = readUntilNewLine(context.unread)
+      const readCommentResult = findNewLine(context.unread)
       discard(context, readCommentResult.expIndex)
       break
     }
     case HASH_COMMENT_START: {
       read(context, readResult.expIndex, readResult.unreadStartIndex)
-      const readCommentResult = readUntilNewLine(context.unread)
+      const readCommentResult = findNewLine(context.unread)
       discard(context, readCommentResult.expIndex)
       break
     }
@@ -155,11 +155,11 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: R
       if (['!', '+'].includes(context.unread[readResult.unreadStartIndex])) {
         // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
         read(context, readResult.unreadStartIndex)
-        const readCommentResult = readUntilCStyleCommentEnd(context.unread)
+        const readCommentResult = findCStyleCommentEnd(context.unread)
         read(context, readCommentResult.unreadStartIndex)
       } else {
         read(context, readResult.expIndex, readResult.unreadStartIndex)
-        const readCommentResult = readUntilCStyleCommentEnd(context.unread)
+        const readCommentResult = findCStyleCommentEnd(context.unread)
         discard(context, readCommentResult.unreadStartIndex)
       }
       break
@@ -189,7 +189,7 @@ export function split (sql: string, options?: SplitOptions): string[] {
     currentStatement: '',
     splitResult: []
   }
-  let readResult: ReadUntilExpResult = {
+  let readResult: FindExpResult = {
     expIndex: -1,
     exp: null,
     unreadStartIndex: 0
@@ -197,7 +197,7 @@ export function split (sql: string, options?: SplitOptions): string[] {
   let lastUnreadLength
   do {
     lastUnreadLength = context.unread.length
-    readResult = readUntilKeyToken(context.unread, context.currentDelimiter)
+    readResult = findKeyToken(context.unread, context.currentDelimiter)
     handleKeyTokenReadResult(context, readResult)
   // Length checking prevent infinite loop by returning incorrect result
   } while (context.unread !== '' && lastUnreadLength !== context.unread.length)
