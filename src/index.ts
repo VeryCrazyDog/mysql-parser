@@ -66,9 +66,12 @@ function readUntilKeyToken (content: string, startIndex: number, currentDelimite
   return readUntilExp(content, startIndex, regex)
 }
 
-function readUntilEndOfSingleQuoteString (content: string, startIndex: number): ReadUntilExpResult {
+function readUntilEndQuote (content: string, startIndex: number, quote: string): ReadUntilExpResult {
+  if (![SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK].includes(quote)) {
+    throw new TypeError('Incorrect quote supplied')
+  }
   // TODO Cache the result to avoid re-calcuation
-  const regex = /(?<!\\)'/
+  const regex = new RegExp(/(?<!\\)/.source + quote)
   return readUntilExp(content, startIndex, regex)
 }
 
@@ -153,24 +156,23 @@ export function split (sql: string, options?: SplitOptions): string[] {
     if (lastToken !== null) {
       switch (lastToken.trim()) {
         case currentDelimiter:
-          result.push(currentStatement + lastRead)
+        case null:
+          result.push((currentStatement + lastRead).trim())
           currentStatement = ''
           break
         case SINGLE_QUOTE:
+        case DOUBLE_QUOTE:
+        case BACKTICK:
           currentStatement += lastRead + lastToken
           ;({
             read: lastRead,
             exp: lastToken,
             unreadStartIndex: nextIndex
-          } = readUntilEndOfSingleQuoteString(sql, nextIndex))
+          } = readUntilEndQuote(sql, nextIndex, lastToken))
           currentStatement += lastRead
           if (lastToken !== null) {
             currentStatement += lastToken
           }
-          break
-        case DOUBLE_QUOTE:
-          break
-        case BACKTICK:
           break
         case DOUBLE_DASH_COMMENT_START:
         case HASH_COMMENT_START:
@@ -178,8 +180,6 @@ export function split (sql: string, options?: SplitOptions): string[] {
         case C_STYLE_COMMENT_START:
           break
         case DELIMITER_KEYWORD:
-          break
-        case null:
           break
         default:
           // This should never happen
