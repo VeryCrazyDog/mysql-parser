@@ -12,13 +12,14 @@ export interface SplitOptions {
 }
 
 interface SplitExecutionContext {
+  multipleStatements: boolean
+  unread: string
   currentDelimiter: string
   currentStatement: string
   splitResult: string[]
 }
 
 interface ReadUntilExpResult {
-  read: string
   expIndex: number
   exp: string | null
   unreadStartIndex: number
@@ -57,51 +58,117 @@ function buildKeyTokenRegex (delimiter: string): RegExp {
   ].join('|') + ')', 'i')
 }
 
-function readUntilExp (content: string, startIndex: number, regex: RegExp): ReadUntilExpResult {
-  const contentToRead = content.slice(startIndex)
-  const match = contentToRead.match(regex)
+function readUntilExp (content: string, regex: RegExp): ReadUntilExpResult {
+  const match = content.match(regex)
   let result: ReadUntilExpResult
   if (match?.index !== undefined) {
     result = {
-      read: contentToRead.slice(0, match.index),
-      expIndex: startIndex + match.index,
+      expIndex: match.index,
       exp: match[0],
-      unreadStartIndex: startIndex + match.index + match[0].length
+      unreadStartIndex: match.index + match[0].length
     }
   } else {
     result = {
-      read: contentToRead,
       expIndex: -1,
       exp: null,
-      unreadStartIndex: -1
+      unreadStartIndex: content.length
     }
   }
   return result
 }
 
-function readUntilKeyToken (content: string, startIndex: number, currentDelimiter: string): ReadUntilExpResult {
+function readUntilKeyToken (content: string, currentDelimiter: string): ReadUntilExpResult {
   let regex
   if (currentDelimiter === SEMICOLON) {
     regex = semicolonKeyTokenRegex
   } else {
     regex = buildKeyTokenRegex(currentDelimiter)
   }
-  return readUntilExp(content, startIndex, regex)
+  return readUntilExp(content, regex)
 }
 
-function readUntilEndQuote (content: string, startIndex: number, quote: string): ReadUntilExpResult {
+function readUntilEndQuote (content: string, quote: string): ReadUntilExpResult {
   if (!(quote in quoteEndRegexDict)) {
     throw new TypeError(`Incorrect quote ${quote} supplied`)
   }
-  return readUntilExp(content, startIndex, quoteEndRegexDict[quote])
+  return readUntilExp(content, quoteEndRegexDict[quote])
 }
 
-function readUntilNewLine (content: string, startIndex: number): ReadUntilExpResult {
-  return readUntilExp(content, startIndex, newLineRegex)
+function readUntilNewLine (content: string): ReadUntilExpResult {
+  return readUntilExp(content, newLineRegex)
 }
 
-function readUntilCStyleCommentEnd (content: string, startIndex: number): ReadUntilExpResult {
-  return readUntilExp(content, startIndex, cStyleCommentEndRegex)
+function readUntilCStyleCommentEnd (content: string): ReadUntilExpResult {
+  return readUntilExp(content, cStyleCommentEndRegex)
+}
+
+function read (context: SplitExecutionContext, readToIndex: number): void {
+  if (readToIndex > 0) {
+    context.currentStatement += context.unread.slice(0, readToIndex)
+    context.unread = context.unread.slice(readToIndex)
+  }
+}
+
+function pushSplitResult (context: SplitExecutionContext): void {
+  const currentStatement = context.currentStatement.trim()
+  if (currentStatement !== '') {
+    context.splitResult.push(currentStatement)
+  }
+  context.currentStatement = ''
+}
+
+function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: ReadUntilExpResult): void {
+  switch (readResult.exp?.trim()) {
+    case context.currentDelimiter:
+      read(context, readResult.expIndex)
+      pushSplitResult(context)
+      break
+    case SINGLE_QUOTE:
+    case DOUBLE_QUOTE:
+    case BACKTICK: {
+      read(context, readResult.unreadStartIndex)
+      const readQuoteResult = readUntilEndQuote(context.unread, readResult.exp)
+      read(context, readQuoteResult.unreadStartIndex)
+      break
+    }
+    case DOUBLE_DASH_COMMENT_START: {
+      context.currentStatement += context.unread.slice(0, readResult.expIndex)
+      context.unread = context.unread.slice(readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
+      const readCommentResult = readUntilNewLine(context.unread)
+      context.unread = context.unread.slice(readCommentResult.unreadStartIndex)
+      break
+    }
+    case HASH_COMMENT_START: {
+      context.currentStatement += context.unread.slice(0, readResult.expIndex)
+      context.unread = context.unread.slice(readResult.unreadStartIndex)
+      const readCommentResult = readUntilNewLine(context.unread)
+      context.unread = context.unread.slice(readCommentResult.unreadStartIndex)
+      break
+    }
+    case C_STYLE_COMMENT_START: {
+      if (['!', '+'].includes(context.unread[readResult.unreadStartIndex])) {
+        // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
+        read(context, readResult.unreadStartIndex)
+        const readCommentResult = readUntilCStyleCommentEnd(context.unread)
+        read(context, readCommentResult.unreadStartIndex)
+      } else {
+        context.currentStatement += context.unread.slice(0, readResult.expIndex)
+        context.unread = context.unread.slice(readResult.unreadStartIndex)
+        const readCommentResult = readUntilCStyleCommentEnd(context.unread)
+        context.unread = context.unread.slice(readCommentResult.unreadStartIndex)
+      }
+      break
+    }
+    case DELIMITER_KEYWORD:
+      break
+    case null:
+      read(context, readResult.unreadStartIndex)
+      pushSplitResult(context)
+      break
+    default:
+      // This should never happen
+      throw new Error(`Unknown token '${readResult.exp ?? '(null)'}'`)
+  }
 }
 
 export function split (sql: string, options?: SplitOptions): string[] {
@@ -109,71 +176,20 @@ export function split (sql: string, options?: SplitOptions): string[] {
   const multipleStatements = options.multipleStatements ?? false
 
   const context: SplitExecutionContext = {
+    multipleStatements,
+    unread: sql,
     currentDelimiter: SEMICOLON,
     currentStatement: '',
     splitResult: []
   }
   let readResult: ReadUntilExpResult = {
-    read: '',
     expIndex: -1,
     exp: null,
     unreadStartIndex: 0
   }
   do {
-    readResult = readUntilKeyToken(sql, readResult.unreadStartIndex, context.currentDelimiter)
-    if (readResult.exp !== null) {
-      context.currentStatement += readResult.read
-      switch (readResult.exp.trim()) {
-        case context.currentDelimiter:
-        case null:
-          const currentStatement = context.currentStatement.trim()
-          if (currentStatement !== '') {
-            context.splitResult.push(currentStatement)
-          }
-          context.currentStatement = ''
-          break
-        case SINGLE_QUOTE:
-        case DOUBLE_QUOTE:
-        case BACKTICK:
-          context.currentStatement += readResult.exp
-          readResult = readUntilEndQuote(sql, readResult.unreadStartIndex, readResult.exp)
-          context.currentStatement += readResult.read
-          if (readResult.exp !== null) {
-            context.currentStatement += readResult.exp
-          }
-          break
-        case DOUBLE_DASH_COMMENT_START:
-          readResult = readUntilNewLine(sql, readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
-          if (readResult.exp !== null) {
-            context.currentStatement += readResult.exp
-          }
-          break
-        case HASH_COMMENT_START:
-          readResult = readUntilNewLine(sql, readResult.unreadStartIndex)
-          if (readResult.exp !== null) {
-            context.currentStatement += readResult.exp
-          }
-          break
-        case C_STYLE_COMMENT_START:
-          if (['!', '+'].includes(sql[readResult.expIndex + C_STYLE_COMMENT_START.length])) {
-            // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
-            context.currentStatement += readResult.exp
-            readResult = readUntilCStyleCommentEnd(sql, readResult.unreadStartIndex)
-            context.currentStatement += readResult.read
-            if (readResult.exp !== null) {
-              context.currentStatement += readResult.exp
-            }
-          } else {
-            readResult = readUntilCStyleCommentEnd(sql, readResult.unreadStartIndex)
-          }
-          break
-        case DELIMITER_KEYWORD:
-          break
-        default:
-          // This should never happen
-          throw new Error(`Unknown token '${readResult.exp}'`)
-      }
-    }
-  } while (readResult.exp !== null)
+    readResult = readUntilKeyToken(context.unread, context.currentDelimiter)
+    handleKeyTokenReadResult(context, readResult)
+  } while (context.unread !== '')
   return context.splitResult
 }
