@@ -102,10 +102,18 @@ function readUntilCStyleCommentEnd (content: string): ReadUntilExpResult {
   return readUntilExp(content, cStyleCommentEndRegex)
 }
 
-function read (context: SplitExecutionContext, readToIndex: number): void {
-  if (readToIndex > 0) {
-    context.currentStatement += context.unread.slice(0, readToIndex)
+function read (context: SplitExecutionContext, readToIndex: number, nextUnreadIndex?: number): void {
+  context.currentStatement += context.unread.slice(0, readToIndex)
+  if (nextUnreadIndex !== undefined && nextUnreadIndex > 0) {
+    context.unread = context.unread.slice(nextUnreadIndex)
+  } else {
     context.unread = context.unread.slice(readToIndex)
+  }
+}
+
+function discard (context: SplitExecutionContext, nextUnreadIndex: number): void {
+  if (nextUnreadIndex > 0) {
+    context.unread = context.unread.slice(nextUnreadIndex)
   }
 }
 
@@ -120,7 +128,7 @@ function pushSplitResult (context: SplitExecutionContext): void {
 function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: ReadUntilExpResult): void {
   switch (readResult.exp?.trim()) {
     case context.currentDelimiter:
-      read(context, readResult.expIndex)
+      read(context, readResult.expIndex, readResult.unreadStartIndex)
       pushSplitResult(context)
       break
     case SINGLE_QUOTE:
@@ -132,17 +140,15 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: R
       break
     }
     case DOUBLE_DASH_COMMENT_START: {
-      context.currentStatement += context.unread.slice(0, readResult.expIndex)
-      context.unread = context.unread.slice(readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
+      read(context, readResult.expIndex, readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
       const readCommentResult = readUntilNewLine(context.unread)
-      context.unread = context.unread.slice(readCommentResult.unreadStartIndex)
+      discard(context, readCommentResult.unreadStartIndex)
       break
     }
     case HASH_COMMENT_START: {
-      context.currentStatement += context.unread.slice(0, readResult.expIndex)
-      context.unread = context.unread.slice(readResult.unreadStartIndex)
+      read(context, readResult.expIndex, readResult.unreadStartIndex)
       const readCommentResult = readUntilNewLine(context.unread)
-      context.unread = context.unread.slice(readCommentResult.unreadStartIndex)
+      discard(context, readCommentResult.unreadStartIndex)
       break
     }
     case C_STYLE_COMMENT_START: {
@@ -152,16 +158,16 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: R
         const readCommentResult = readUntilCStyleCommentEnd(context.unread)
         read(context, readCommentResult.unreadStartIndex)
       } else {
-        context.currentStatement += context.unread.slice(0, readResult.expIndex)
-        context.unread = context.unread.slice(readResult.unreadStartIndex)
+        read(context, readResult.expIndex, readResult.unreadStartIndex)
         const readCommentResult = readUntilCStyleCommentEnd(context.unread)
-        context.unread = context.unread.slice(readCommentResult.unreadStartIndex)
+        discard(context, readCommentResult.unreadStartIndex)
       }
       break
     }
     case DELIMITER_KEYWORD:
       break
     case null:
+    case undefined:
       read(context, readResult.unreadStartIndex)
       pushSplitResult(context)
       break
