@@ -42,19 +42,6 @@ CREATE TABLE students_history (
 -- -----------------------------------------------------------------------------
 DELIMITER $$
 
-CREATE /* DEFINER = `root`@`%` */ TRIGGER students_after_insert AFTER INSERT ON students FOR EACH ROW
-BEGIN
-  INSERT INTO students_history SET
-    student_id = NEW.id,
-    version = NEW.version,
-    action = 'A',
-    action_time = NEW.created_time,
-    name = NEW.name,
-    code = NEW.code,
-    gender = NEW.gender,
-    birthday = NEW.birthday;
-END$$
-
 CREATE /* DEFINER = `root`@`%` */ TRIGGER students_after_update AFTER UPDATE ON students FOR EACH ROW
 BEGIN
   INSERT INTO students_history SET
@@ -68,19 +55,6 @@ BEGIN
     birthday = NEW.birthday;
 END$$
 
-CREATE /* DEFINER = `root`@`%` */ TRIGGER students_after_delete AFTER DELETE ON students FOR EACH ROW
-BEGIN
-  INSERT INTO students_history SET
-    student_id = OLD.id,
-    version = OLD.version + 1,
-    action = 'D',
-    action_time = CURRENT_TIMESTAMP,
-    name = OLD.name,
-    code = OLD.code,
-    gender = OLD.gender,
-    birthday = OLD.birthday;
-END$$
-
 DELIMITER ;
 
 -- -----------------------------------------------------------------------------
@@ -91,12 +65,7 @@ INSERT students (id, name, code, gender, birthday) VALUES
   (2, 'Benny', 'student2', 'M', '1981-02-02'),
   (3, 'Carmen', 'student3', 'F', '1981-03-03'),
   (4, 'David', 'student4', NULL, '1980-04-04'),
-  (5, 'Edith', 'student5', 'F', '1983-05-05'),
-  (6, 'Fanny', 'student6', 'F', '1980-06-06'),
-  (7, 'Gabriel', 'student7', 'M', '1981-07-07'),
-  (8, 'Henry', 'student8', 'M', '1980-08-08'),
-  (9, 'Ivan', 'student9', 'M', '1982-09-09'),
-  (10, 'Janice', 'student10', 'F', '1983-10-10');
+  (5, 'Edith', 'student5', 'F', '1983-05-05');
 
 -- -----------------------------------------------------------------------------
 -- Update data to trigger trigger
