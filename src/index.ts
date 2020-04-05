@@ -11,6 +11,12 @@ export interface SplitOptions {
   multipleStatements?: boolean
 }
 
+interface SplitExecutionContext {
+  currentDelimiter: string
+  currentStatement: string
+  splitResult: string[]
+}
+
 interface ReadUntilExpResult {
   read: string
   expIndex: number
@@ -102,89 +108,72 @@ export function split (sql: string, options?: SplitOptions): string[] {
   options = options ?? {}
   const multipleStatements = options.multipleStatements ?? false
 
-  let nextIndex: number = 0
-  const currentDelimiter: string = SEMICOLON
-  let lastRead: string = ''
-  let lastTokenIndex: number = -1
-  let lastToken: string | null = null
-  let currentStatement = ''
-  const result: string[] = []
+  const context: SplitExecutionContext = {
+    currentDelimiter: SEMICOLON,
+    currentStatement: '',
+    splitResult: []
+  }
+  let readResult: ReadUntilExpResult = {
+    read: '',
+    expIndex: -1,
+    exp: null,
+    unreadStartIndex: 0
+  }
   do {
-    ;({
-      read: lastRead,
-      expIndex: lastTokenIndex,
-      exp: lastToken,
-      unreadStartIndex: nextIndex
-    } = readUntilKeyToken(sql, nextIndex, currentDelimiter))
-    if (lastToken !== null) {
-      currentStatement += lastRead
-      switch (lastToken.trim()) {
-        case currentDelimiter:
+    readResult = readUntilKeyToken(sql, readResult.unreadStartIndex, context.currentDelimiter)
+    if (readResult.exp !== null) {
+      context.currentStatement += readResult.read
+      switch (readResult.exp.trim()) {
+        case context.currentDelimiter:
         case null:
-          currentStatement = currentStatement.trim()
+          const currentStatement = context.currentStatement.trim()
           if (currentStatement !== '') {
-            result.push(currentStatement)
+            context.splitResult.push(currentStatement)
           }
-          currentStatement = ''
+          context.currentStatement = ''
           break
         case SINGLE_QUOTE:
         case DOUBLE_QUOTE:
         case BACKTICK:
-          currentStatement += lastToken
-          ;({
-            read: lastRead,
-            exp: lastToken,
-            unreadStartIndex: nextIndex
-          } = readUntilEndQuote(sql, nextIndex, lastToken))
-          currentStatement += lastRead
-          if (lastToken !== null) {
-            currentStatement += lastToken
+          context.currentStatement += readResult.exp
+          readResult = readUntilEndQuote(sql, readResult.unreadStartIndex, readResult.exp)
+          context.currentStatement += readResult.read
+          if (readResult.exp !== null) {
+            context.currentStatement += readResult.exp
           }
           break
         case DOUBLE_DASH_COMMENT_START:
-          ;({
-            exp: lastToken,
-            unreadStartIndex: nextIndex
-          } = readUntilNewLine(sql, lastTokenIndex + DOUBLE_DASH_COMMENT_START.length))
-          if (lastToken !== null) {
-            currentStatement += lastToken
+          readResult = readUntilNewLine(sql, readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
+          if (readResult.exp !== null) {
+            context.currentStatement += readResult.exp
           }
           break
         case HASH_COMMENT_START:
-          ;({
-            exp: lastToken,
-            unreadStartIndex: nextIndex
-          } = readUntilNewLine(sql, nextIndex))
-          if (lastToken !== null) {
-            currentStatement += lastToken
+          readResult = readUntilNewLine(sql, readResult.unreadStartIndex)
+          if (readResult.exp !== null) {
+            context.currentStatement += readResult.exp
           }
           break
         case C_STYLE_COMMENT_START:
-          if (['!', '+'].includes(sql[lastTokenIndex + C_STYLE_COMMENT_START.length])) {
+          if (['!', '+'].includes(sql[readResult.expIndex + C_STYLE_COMMENT_START.length])) {
             // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
-            currentStatement += lastToken
-            ;({
-              read: lastRead,
-              exp: lastToken,
-              unreadStartIndex: nextIndex
-            } = readUntilCStyleCommentEnd(sql, nextIndex))
-            currentStatement += lastRead
-            if (lastToken !== null) {
-              currentStatement += lastToken
+            context.currentStatement += readResult.exp
+            readResult = readUntilCStyleCommentEnd(sql, readResult.unreadStartIndex)
+            context.currentStatement += readResult.read
+            if (readResult.exp !== null) {
+              context.currentStatement += readResult.exp
             }
           } else {
-            ;({
-              unreadStartIndex: nextIndex
-            } = readUntilCStyleCommentEnd(sql, nextIndex))
+            readResult = readUntilCStyleCommentEnd(sql, readResult.unreadStartIndex)
           }
           break
         case DELIMITER_KEYWORD:
           break
         default:
           // This should never happen
-          throw new Error(`Unknown token '${lastToken}'`)
+          throw new Error(`Unknown token '${readResult.exp}'`)
       }
     }
-  } while (lastToken !== null)
-  return result
+  } while (readResult.exp !== null)
+  return context.splitResult
 }
