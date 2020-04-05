@@ -2,6 +2,15 @@
 A parser for MySQL statements. The current goal is to solve the [missing DELIMITER syntax support][1]
 in Node.js module [mysql][mysqljs/mysql].
 
+[![Version on npm]][mysql-parser]
+[![Build status]][Build workflow]
+
+
+## Install
+```
+npm install @verycrazydog/mysql-parser
+```
+
 
 ## Usage
 Split into an array of MySQL statement, one statement per array item
@@ -52,5 +61,9 @@ This module was built by referencing the following materials:
 
 [1]: https://github.com/mysqljs/mysql/issues/1683
 [2]: https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql-pass.ts
+[Build status]: https://img.shields.io/github/workflow/status/VeryCrazyDog/mysql-parser/Node.js%20CI
+[Build workflow]: https://github.com/VeryCrazyDog/mysql-parser/actions?query=workflow%3A%22Node.js+CI%22
 [mysqljs/mysql]: https://github.com/mysqljs/mysql
+[mysql-parser]: https://www.npmjs.com/package/@verycrazydog/mysql-parser
+[Version on npm]: https://img.shields.io/npm/v/@verycrazydog/mysql-parser
 [vscode-database]: https://github.com/Bajdzis/vscode-database

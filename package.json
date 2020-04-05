@@ -1,6 +1,6 @@
 {
 	"name": "@verycrazydog/mysql-parser",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Parser for MySQL statements",
 	"engines": {
 		"node": ">= 10.*"
@@ -38,6 +38,6 @@
 	"keywords": [
 		"mysql",
 		"parser",
-		"parse"
+		"split"
 	]
 }
