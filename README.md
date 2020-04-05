@@ -15,6 +15,7 @@ npm install @verycrazydog/mysql-parser
 ## Usage
 Split into an array of MySQL statement, one statement per array item
 ```js
+const mysqlParser = require('@verycrazydog/mysql-parser')
 const splitResult = mysqlParser.split(`
   SELECT 1;
   SELECT 2;
@@ -35,6 +36,7 @@ console.log(splitResult)
 
 Split into an array of MySQL statement, allow multiple statements per array item
 ```js
+const mysqlParser = require('@verycrazydog/mysql-parser')
 const splitResult = mysqlParser.split(`
   SELECT 1;
   SELECT 2;
