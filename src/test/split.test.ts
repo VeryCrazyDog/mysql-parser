@@ -173,3 +173,8 @@ test('should handle double backtick', t => {
   const output = split(input.join(';\n') + ';')
   t.deepEqual(output, input)
 })
+
+test('should drop statement after delimiter command', t => {
+  const output = split('DELIMITER $$  SELECT 2;')
+  t.deepEqual(output, [])
+})

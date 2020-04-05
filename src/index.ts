@@ -32,8 +32,10 @@ const backtickQuoteEndRegex = /(?<!`)`(?!`)/
 const doubleDashCommentStartRegex = /--[ \f\n\r\t\v]/
 const cStyleCommentStartRegex = /\/\*/
 const cStyleCommentEndRegex = /(?<!\/)\*\//
-const newLineRegex = /[\r\n]+/
-const delimiterStartRegex = /[\n\r]+[ \f\t\v]*DELIMITER[ \t]+/i
+const newLineRegex = /(?:[\r\n]+|$)/
+const delimiterStartRegex = /(?:^|[\n\r]+)[ \f\t\v]*DELIMITER[ \t]+/i
+// Best effort only, unable to find a syntax specification on delimiter
+const delimiterTokenRegex = /(?:'(.+)'|"(.+)"|`(.+)`|([^\s]+))/
 const semicolonKeyTokenRegex = buildKeyTokenRegex(SEMICOLON)
 const quoteEndRegexDict: Record<string, RegExp> = {
   [SINGLE_QUOTE]: singleQuoteStringEndRegex,
@@ -94,14 +96,6 @@ function findEndQuote (content: string, quote: string): FindExpResult {
   return findExp(content, quoteEndRegexDict[quote])
 }
 
-function findNewLine (content: string): FindExpResult {
-  return findExp(content, newLineRegex)
-}
-
-function findCStyleCommentEnd (content: string): FindExpResult {
-  return findExp(content, cStyleCommentEndRegex)
-}
-
 function read (context: SplitExecutionContext, readToIndex: number, nextUnreadIndex?: number): void {
   context.currentStatement += context.unread.slice(0, readToIndex)
   if (nextUnreadIndex !== undefined && nextUnreadIndex > 0) {
@@ -152,13 +146,13 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: F
     }
     case DOUBLE_DASH_COMMENT_START: {
       read(context, readResult.expIndex, readResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
-      const readCommentResult = findNewLine(context.unread)
+      const readCommentResult = findExp(context.unread, newLineRegex)
       discard(context, readCommentResult.expIndex)
       break
     }
     case HASH_COMMENT_START: {
       read(context, readResult.expIndex, readResult.unreadStartIndex)
-      const readCommentResult = findNewLine(context.unread)
+      const readCommentResult = findExp(context.unread, newLineRegex)
       discard(context, readCommentResult.expIndex)
       break
     }
@@ -166,18 +160,26 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: F
       if (['!', '+'].includes(context.unread[readResult.unreadStartIndex])) {
         // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
         read(context, readResult.unreadStartIndex)
-        const readCommentResult = findCStyleCommentEnd(context.unread)
+        const readCommentResult = findExp(context.unread, cStyleCommentEndRegex)
         read(context, readCommentResult.unreadStartIndex)
       } else {
         read(context, readResult.expIndex, readResult.unreadStartIndex)
-        const readCommentResult = findCStyleCommentEnd(context.unread)
+        const readCommentResult = findExp(context.unread, cStyleCommentEndRegex)
         discard(context, readCommentResult.unreadStartIndex)
       }
       break
     }
-    case DELIMITER_KEYWORD:
-      // TODO Implement
+    case DELIMITER_KEYWORD: {
+      read(context, readResult.expIndex, readResult.unreadStartIndex)
+      const matched = context.unread.match(delimiterTokenRegex)
+      if (matched?.index !== undefined) {
+        context.currentDelimiter = matched[0].trim()
+        discard(context, matched[0].length)
+      }
+      const findNewLineResult = findExp(context.unread, newLineRegex)
+      discard(context, findNewLineResult.expIndex)
       break
+    }
     case undefined:
     case null:
       read(context, readResult.unreadStartIndex)
