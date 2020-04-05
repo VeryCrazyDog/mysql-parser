@@ -19,8 +19,8 @@ test('correct split many query', t => {
 
 // eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L21
-test.skip('delete empty query', t => {
-  const output = split(';;;;;SELECT * FROM `table1`;;;;;SELECT * FROM `table2`;;;;;;')
+test('delete empty query', t => {
+  const output = split(';;;\n;;SELECT * FROM `table1`;;;;;SELECT * FROM `table2`;;; ;;;')
   t.deepEqual(output, [
     'SELECT * FROM `table1`',
     'SELECT * FROM `table2`'

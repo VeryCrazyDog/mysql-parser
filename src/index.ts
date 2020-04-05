@@ -157,7 +157,11 @@ export function split (sql: string, options?: SplitOptions): string[] {
       switch (lastToken.trim()) {
         case currentDelimiter:
         case null:
-          result.push((currentStatement + lastRead).trim())
+          currentStatement += lastRead
+          currentStatement = currentStatement.trim()
+          if (currentStatement !== '') {
+            result.push(currentStatement)
+          }
           currentStatement = ''
           break
         case SINGLE_QUOTE:
