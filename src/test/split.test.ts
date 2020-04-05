@@ -29,7 +29,7 @@ test('delete empty query', t => {
 
 // eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L30
-test.skip('test double dash comments, with nested and escaped quotes', t => {
+test('test double dash comments, with nested and escaped quotes', t => {
   const output = split([
     '',
     '    SELECT col FROM -- comment',
@@ -59,7 +59,7 @@ test.skip('test c-style comments, with nested and escaped quotes', t => {
 
 // eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L50
-test.skip('test hash comments, with nested and escaped quotes', t => {
+test('test hash comments, with nested and escaped quotes', t => {
   const output = split([
     '',
     `    SELECT col FROM #comment`,

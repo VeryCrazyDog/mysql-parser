@@ -7,9 +7,6 @@ const C_STYLE_COMMENT_START = '/*'
 const DELIMITER_KEYWORD = 'DELIMITER'
 
 export interface SplitOptions {
-  retainHashComments?: boolean
-  retainDoubleDashComments? : boolean
-  retainCStyleComments?: boolean
   multipleStatements?: boolean
 }
 
@@ -24,6 +21,7 @@ const regexEscapeSetRegex = /[-/\\^$*+?.()|[\]{}]/g
 const doubleDashCommentStartRegex = /--[ \f\n\r\t\v]/
 const cStyleCommentStartRegex = /\/\*/
 const delimiterStartRegex = /[\n\r]+[ \f\t\v]*DELIMITER[ \t]+/i
+const newLineRegex = /[\r\n]+/
 
 function escapeRegex (value: string): string {
   return value.replace(regexEscapeSetRegex, '\\$&')
@@ -73,6 +71,10 @@ function readUntilEndQuote (content: string, startIndex: number, quote: string):
   // TODO Cache the result to avoid re-calcuation
   const regex = new RegExp(/(?<!\\)/.source + quote)
   return readUntilExp(content, startIndex, regex)
+}
+
+function readUntilNewLine (content: string, startIndex: number): ReadUntilExpResult {
+  return readUntilExp(content, startIndex, newLineRegex)
 }
 
 // Not able to split long URL
@@ -134,9 +136,6 @@ function splitQueries (sqlMulti: string): string[] {
 
 export function split (sql: string, options?: SplitOptions): string[] {
   options = options ?? {}
-  const retainHashComments = options.retainHashComments ?? false
-  const retainDoubleDashComments = options.retainDoubleDashComments ?? false
-  const retainCStyleComments = options.retainCStyleComments ?? false
   const multipleStatements = options.multipleStatements ?? false
 
   let nextIndex: number = 0
@@ -179,7 +178,24 @@ export function split (sql: string, options?: SplitOptions): string[] {
           }
           break
         case DOUBLE_DASH_COMMENT_START:
+          currentStatement += lastRead
+          ;({
+            exp: lastToken,
+            unreadStartIndex: nextIndex
+          } = readUntilNewLine(sql, lastTokenIndex + DOUBLE_DASH_COMMENT_START.length))
+          if (lastToken !== null) {
+            currentStatement += lastToken
+          }
+          break
         case HASH_COMMENT_START:
+          currentStatement += lastRead
+          ;({
+            exp: lastToken,
+            unreadStartIndex: nextIndex
+          } = readUntilNewLine(sql, nextIndex))
+          if (lastToken !== null) {
+            currentStatement += lastToken
+          }
           break
         case C_STYLE_COMMENT_START:
           break
