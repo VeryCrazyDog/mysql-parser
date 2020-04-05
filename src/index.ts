@@ -165,9 +165,10 @@ function handleKeyTokenReadResult (context: SplitExecutionContext, readResult: R
       break
     }
     case DELIMITER_KEYWORD:
+      // TODO Implement
       break
-    case null:
     case undefined:
+    case null:
       read(context, readResult.unreadStartIndex)
       pushSplitResult(context)
       break
@@ -193,9 +194,12 @@ export function split (sql: string, options?: SplitOptions): string[] {
     exp: null,
     unreadStartIndex: 0
   }
+  let lastUnreadLength
   do {
+    lastUnreadLength = context.unread.length
     readResult = readUntilKeyToken(context.unread, context.currentDelimiter)
     handleKeyTokenReadResult(context, readResult)
-  } while (context.unread !== '')
+  // Length checking prevent infinite loop by returning incorrect result
+  } while (context.unread !== '' && lastUnreadLength !== context.unread.length)
   return context.splitResult
 }

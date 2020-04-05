@@ -12,7 +12,7 @@ import { split } from '../index'
 let statements: string[]
 
 // Initialize
-test.before(async t => {
+test.before(async () => {
   const sql = await fs.readFile(join(__dirname, 'data', 'school.sql'), 'utf8')
   statements = split(sql)
 })
