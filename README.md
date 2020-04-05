@@ -1,4 +1,4 @@
-# mysql-parser
+# @verycrazydog/mysql-parser
 A parser for MySQL statements. The current goal is to solve the [missing DELIMITER syntax support][1]
 in Node.js module [mysql][mysqljs/mysql].
 

@@ -1,5 +1,5 @@
 {
-	"name": "mysql-parser",
+	"name": "@verycrazydog/mysql-parser",
 	"version": "1.0.0",
 	"description": "Parser for MySQL statements",
 	"engines": {
