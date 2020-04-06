@@ -1,6 +1,7 @@
 # @verycrazydog/mysql-parser
-A parser for MySQL statements. The current goal is to solve the [missing DELIMITER syntax support][1]
-in Node.js module [mysql][mysqljs/mysql].
+A parser for MySQL statements. The current goal is to provide a solution to the
+[missing DELIMITER syntax support][1] in Node.js module [mysql][mysqljs/mysql] with
+the aim to support MySQL dump file and common usage scenario.
 
 [![Version on npm]][mysql-parser]
 [![Supported Node.js version]][Node.js download]
@@ -69,7 +70,7 @@ const ENABLE_MULTI_STATEMENT = true
     SELECT 'Hello world!' message FROM dual;
     DELIMITER $$
     SELECT 'DELIMITER is supported!' message FROM dual$$
-    DELIMITER ;
+    DELIMITER ;    SELECT 'Same as MySQL client, this will not print out' message FROM dual;
     /*! SELECT "'/*!' style comment is executed!" message FROM dual */;
     -- multipleStatements option allows statements that can be separated by
     /* semicolon combined together in one, allowing to send to server in one */
@@ -102,6 +103,18 @@ const ENABLE_MULTI_STATEMENT = true
   console.log('Done! Query count:', queryCount)
 })()
 ```
+
+
+## Limitation
+Some limitations of this module which are currently not addressed:
+- MySQL client will return *DELIMITER cannot contain a backslash character* if backslash
+  is used such as `DELIMITER \\`, however this module will not throw any error and will
+  ignore the `DELIMITER` line.
+- MySQL client support `\g` and `\G` as delimiter, however this module will not treat
+  them as delimiter.
+- MySQL client will return *DELIMITER must be followed by a 'delimiter' character or string*
+  if there is nothing specified after keyword `DELIMITER`, however this module will not throw
+  any error and will ignore the `DELIMITER` line.
 
 
 ## License
