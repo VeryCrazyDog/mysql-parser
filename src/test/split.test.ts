@@ -188,7 +188,7 @@ test('should not treat \\G as delimiter', t => {
   t.deepEqual(output, [input])
 })
 
-test.skip('should ignore invalid delimiter command', t => {
+test('should ignore invalid delimiter command', t => {
   const output = split([
     'SELECT 1;',
     'DELIMITER    ',

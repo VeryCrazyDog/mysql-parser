@@ -41,7 +41,7 @@ const cStyleCommentEndRegex = /(?<!\/)\*\//
 const newLineRegex = /(?:[\r\n]+|$)/
 const delimiterStartRegex = /(?:^|[\n\r]+)[ \f\t\v]*DELIMITER[ \t]+/i
 // Best effort only, unable to find a syntax specification on delimiter
-const delimiterTokenRegex = /(?:'(.+)'|"(.+)"|`(.+)`|([^\s]+))/
+const delimiterTokenRegex = /^(?:'(.+)'|"(.+)"|`(.+)`|([^\s]+))/
 const semicolonKeyTokenRegex = buildKeyTokenRegex(SEMICOLON)
 const quoteEndRegexDict: Record<string, RegExp> = {
   [SINGLE_QUOTE]: singleQuoteStringEndRegex,
