@@ -17,20 +17,14 @@ Split into an array of MySQL statement, one statement per array item
 ```js
 const mysqlParser = require('@verycrazydog/mysql-parser')
 const splitResult = mysqlParser.split(`
+  -- Comment is removed
   SELECT 1;
-  SELECT 2;
-  DELIMITER ;;
-  SELECT 3;;
   DELIMITER $$
-  SELECT 4$$
+  SELECT 2$$
   DELIMITER ;
-  SELECT 5;
-  SELECT 6;
+  SELECT 3;
 `)
-// Print [
-//   'SELECT 1', 'SELECT 2', 'SELECT 3',
-//   'SELECT 4', 'SELECT 5', 'SELECT 6'
-// ]
+// Print [ 'SELECT 1', 'SELECT 2', 'SELECT 3' ]
 console.log(splitResult)
 ```
 
@@ -42,19 +36,70 @@ const splitResult = mysqlParser.split(`
   SELECT 2;
   DELIMITER ;;
   SELECT 3;;
-  DELIMITER $$
-  SELECT 4$$
   DELIMITER ;
-  SELECT 5;
-  SELECT 6;
+  SELECT 4;
 `, { multipleStatements: true })
-// Print [
-//   "SELECT 1;\nSELECT 2;",
-//   "SELECT 3",
-//   "SELECT 4",
-//   "SELECT 5;\nSELECT 6;"
-// ]
+// Print ["SELECT 1;\nSELECT 2;","SELECT 3","SELECT 4;"]
 console.log(JSON.stringify(splitResult))
+```
+
+A more extensive complete example
+```js
+const util = require('util')
+const mysql = require('mysql')
+const mysqlParser = require('@verycrazydog/mysql-parser')
+
+const ENABLE_MULTI_STATEMENT = true
+
+;(async () => {
+  const rawConn = mysql.createConnection({
+    host: 'localhost',
+    user: 'my_username',
+    password: 'my_password',
+    multipleStatements: ENABLE_MULTI_STATEMENT
+  })
+  const conn = {
+    raw: rawConn,
+    connect: util.promisify(rawConn.connect).bind(rawConn),
+    query: util.promisify(rawConn.query).bind(rawConn),
+    end: util.promisify(rawConn.end).bind(rawConn)
+  }
+  const sqlFile = `
+    SELECT 'Hello world!' message FROM dual;
+    DELIMITER $$
+    SELECT 'DELIMITER is supported!' message FROM dual$$
+    DELIMITER ;
+    /*! SELECT "'/*!' style comment is executed!" message FROM dual */;
+    -- multipleStatements option allows statements that can be separated by
+    /* semicolon combined together in one, allowing to send to server in one */
+    ## batch, reducing execution time on high latency network
+    SELECT 'Goodbye world!' message FROM dual;
+  `
+  const sqls = mysqlParser.split(sqlFile, { multipleStatements: ENABLE_MULTI_STATEMENT })
+  let queryCount = 0
+  await conn.connect()
+  try {
+    sqls.forEach(async sql => {
+      const queryResults = await conn.query(sql)
+      queryCount++
+      queryResults.forEach(queryResult => {
+        if (!(queryResult instanceof Array)) {
+          queryResult = [queryResult]
+        }
+        queryResult.forEach(row => console.log(row.message))
+      })
+    })
+  } finally {
+    await conn.end()
+  }
+  // Print:
+  //   Hello world!
+  //   DELIMITER is supported!
+  //   '/*!' style comment is executed!
+  //   Goodbye world!
+  //   Done! Query count: 3
+  console.log('Done! Query count:', queryCount)
+})()
 ```
 
 
