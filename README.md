@@ -3,6 +3,7 @@ A parser for MySQL statements. The current goal is to solve the [missing DELIMIT
 in Node.js module [mysql][mysqljs/mysql].
 
 [![Version on npm]][mysql-parser]
+[![Supported Node.js version]][Node.js download]
 [![Build status]][Build workflow]
 
 
@@ -118,9 +119,11 @@ This module was built by referencing the following materials:
 [1]: https://github.com/mysqljs/mysql/issues/1683
 [2]: https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql-pass.ts
 [3]: https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts
-[Build status]: https://img.shields.io/github/workflow/status/VeryCrazyDog/mysql-parser/Node.js%20CI
+[Build status]: https://github.com/VeryCrazyDog/mysql-parser/workflows/Node.js%20CI/badge.svg
 [Build workflow]: https://github.com/VeryCrazyDog/mysql-parser/actions?query=workflow%3A%22Node.js+CI%22
 [mysqljs/mysql]: https://github.com/mysqljs/mysql
 [mysql-parser]: https://www.npmjs.com/package/@verycrazydog/mysql-parser
-[Version on npm]: https://img.shields.io/npm/v/@verycrazydog/mysql-parser
+[Node.js download]: https://nodejs.org/en/download
+[Supported Node.js version]: https://badgen.net/npm/node/@verycrazydog/mysql-parser
+[Version on npm]: https://badgen.net/npm/v/@verycrazydog/mysql-parser
 [vscode-database]: https://github.com/Bajdzis/vscode-database
