@@ -134,6 +134,41 @@ function discardTillNewLine (context: SplitExecutionContext): void {
   discard(context, findResult.expIndex)
 }
 
+function publishStatementInMultiMode (splitOutput: SqlStatement[], currentStatement: SqlStatement): void {
+  if (splitOutput.length === 0) {
+    splitOutput.push({
+      statement: '',
+      allowMultiStatement: true
+    })
+  }
+  const lastSplitResult = splitOutput[splitOutput.length - 1]
+  if (lastSplitResult.allowMultiStatement) {
+    if (currentStatement.allowMultiStatement) {
+      if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
+        lastSplitResult.statement += LINE_FEED
+      }
+      lastSplitResult.statement += currentStatement.statement + SEMICOLON
+    } else {
+      splitOutput.push({
+        statement: currentStatement.statement,
+        allowMultiStatement: false
+      })
+    }
+  } else {
+    if (currentStatement.allowMultiStatement) {
+      splitOutput.push({
+        statement: currentStatement.statement + SEMICOLON,
+        allowMultiStatement: true
+      })
+    } else {
+      splitOutput.push({
+        statement: currentStatement.statement,
+        allowMultiStatement: false
+      })
+    }
+  }
+}
+
 function publishStatement (context: SplitExecutionContext): void {
   const trimmed = context.currentStatement.statement.trim()
   if (trimmed !== '') {
@@ -143,38 +178,8 @@ function publishStatement (context: SplitExecutionContext): void {
         allowMultiStatement: context.currentStatement.allowMultiStatement
       })
     } else {
-      if (context.output.length === 0) {
-        context.output.push({
-          statement: '',
-          allowMultiStatement: true
-        })
-      }
-      const lastSplitResult = context.output[context.output.length - 1]
-      if (lastSplitResult.allowMultiStatement) {
-        if (context.currentStatement.allowMultiStatement) {
-          if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
-            lastSplitResult.statement += LINE_FEED
-          }
-          lastSplitResult.statement += trimmed + SEMICOLON
-        } else {
-          context.output.push({
-            statement: trimmed,
-            allowMultiStatement: false
-          })
-        }
-      } else {
-        if (context.currentStatement.allowMultiStatement) {
-          context.output.push({
-            statement: trimmed + SEMICOLON,
-            allowMultiStatement: true
-          })
-        } else {
-          context.output.push({
-            statement: trimmed,
-            allowMultiStatement: false
-          })
-        }
-      }
+      context.currentStatement.statement = trimmed
+      publishStatementInMultiMode(context.output, context.currentStatement)
     }
   }
   context.currentStatement.statement = ''
