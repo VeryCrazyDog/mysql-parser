@@ -41,7 +41,7 @@ const splitResult = mysqlParser.split(`
   DELIMITER ;
   SELECT 4;
 `, { multipleStatements: true })
-// Print ["SELECT 1;\nSELECT 2;","SELECT 3","SELECT 4;"]
+// Print ["SELECT 1;\nSELECT 2;\nSELECT 3;\nSELECT 4;"]
 console.log(JSON.stringify(splitResult))
 ```
 
@@ -51,11 +51,12 @@ const util = require('util')
 const mysql = require('mysql')
 const mysqlParser = require('@verycrazydog/mysql-parser')
 
+// Try change this to see the effect of `multipleStatements` option
 const ENABLE_MULTI_STATEMENT = true
 
 ;(async () => {
   const rawConn = mysql.createConnection({
-    host: 'localhost',
+    host: 'my_host',
     user: 'my_username',
     password: 'my_password',
     multipleStatements: ENABLE_MULTI_STATEMENT
@@ -99,7 +100,7 @@ const ENABLE_MULTI_STATEMENT = true
   //   DELIMITER is supported!
   //   '/*!' style comment is executed!
   //   Goodbye world!
-  //   Done! Query count: 3
+  //   Done! Query count: 1
   console.log('Done! Query count:', queryCount)
 })()
 ```

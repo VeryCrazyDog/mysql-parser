@@ -142,30 +142,23 @@ function publishStatementInMultiMode (splitOutput: SqlStatement[], currentStatem
     })
   }
   const lastSplitResult = splitOutput[splitOutput.length - 1]
-  if (lastSplitResult.allowMultiStatement) {
-    if (currentStatement.allowMultiStatement) {
+  if (currentStatement.allowMultiStatement) {
+    if (lastSplitResult.allowMultiStatement) {
       if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
         lastSplitResult.statement += LINE_FEED
       }
       lastSplitResult.statement += currentStatement.statement + SEMICOLON
     } else {
       splitOutput.push({
-        statement: currentStatement.statement,
-        allowMultiStatement: false
-      })
-    }
-  } else {
-    if (currentStatement.allowMultiStatement) {
-      splitOutput.push({
         statement: currentStatement.statement + SEMICOLON,
         allowMultiStatement: true
       })
-    } else {
-      splitOutput.push({
-        statement: currentStatement.statement,
-        allowMultiStatement: false
-      })
     }
+  } else {
+    splitOutput.push({
+      statement: currentStatement.statement,
+      allowMultiStatement: false
+    })
   }
 }
 
