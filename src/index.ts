@@ -12,7 +12,7 @@ export interface SplitOptions {
   multipleStatements?: boolean
 }
 
-interface SplitResult {
+interface SqlStatement {
   statement: string
   allowMultiStatement: boolean
 }
@@ -21,8 +21,8 @@ interface SplitExecutionContext {
   multipleStatements: boolean
   unread: string
   currentDelimiter: string
-  currentStatement: string
-  output: SplitResult[]
+  currentStatement: SqlStatement
+  output: SqlStatement[]
 }
 
 interface FindExpResult {
@@ -102,8 +102,20 @@ function findEndQuote (content: string, quote: string): FindExpResult {
   return findExp(content, quoteEndRegexDict[quote])
 }
 
-function read (context: SplitExecutionContext, readToIndex: number, nextUnreadIndex?: number): void {
-  context.currentStatement += context.unread.slice(0, readToIndex)
+function read (
+  context: SplitExecutionContext,
+  readToIndex: number,
+  nextUnreadIndex?: number,
+  checkSemicolon? : boolean
+): void {
+  if (checkSemicolon === undefined) {
+    checkSemicolon = true
+  }
+  const readContent = context.unread.slice(0, readToIndex)
+  if (checkSemicolon && readContent.includes(SEMICOLON)) {
+    context.currentStatement.allowMultiStatement = false
+  }
+  context.currentStatement.statement += readContent
   if (nextUnreadIndex !== undefined && nextUnreadIndex > 0) {
     context.unread = context.unread.slice(nextUnreadIndex)
   } else {
@@ -122,7 +134,7 @@ function discardTillNewLine (context: SplitExecutionContext): void {
   discard(context, findResult.expIndex)
 }
 
-function appendStatement (splitResult: SplitResult[], currentStatement: string): void {
+function appendStatement (splitResult: SqlStatement[], currentStatement: string): void {
   if (splitResult.length === 0) {
     splitResult.push({
       statement: '',
@@ -144,7 +156,7 @@ function appendStatement (splitResult: SplitResult[], currentStatement: string):
 }
 
 function publishStatement (context: SplitExecutionContext): void {
-  const currentStatement = context.currentStatement.trim()
+  const currentStatement = context.currentStatement.statement.trim()
   if (currentStatement !== '') {
     if (!context.multipleStatements) {
       context.output.push({
@@ -162,7 +174,8 @@ function publishStatement (context: SplitExecutionContext): void {
       }
     }
   }
-  context.currentStatement = ''
+  context.currentStatement.statement = ''
+  context.currentStatement.allowMultiStatement = true
 }
 
 function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: FindExpResult): void {
@@ -231,7 +244,10 @@ export function split (sql: string, options?: SplitOptions): string[] {
     multipleStatements,
     unread: sql,
     currentDelimiter: SEMICOLON,
-    currentStatement: '',
+    currentStatement: {
+      statement: '',
+      allowMultiStatement: true
+    },
     output: []
   }
   let findResult: FindExpResult = {
