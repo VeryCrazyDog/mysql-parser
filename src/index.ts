@@ -13,8 +13,8 @@ export interface SplitOptions {
 }
 
 interface SqlStatement {
-  statement: string
-  allowMultiStatement: boolean
+  value: string
+  supportMulti: boolean
 }
 
 interface SplitExecutionContext {
@@ -113,9 +113,9 @@ function read (
   }
   const readContent = context.unread.slice(0, readToIndex)
   if (checkSemicolon && readContent.includes(SEMICOLON)) {
-    context.currentStatement.allowMultiStatement = false
+    context.currentStatement.supportMulti = false
   }
-  context.currentStatement.statement += readContent
+  context.currentStatement.value += readContent
   if (nextUnreadIndex !== undefined && nextUnreadIndex > 0) {
     context.unread = context.unread.slice(nextUnreadIndex)
   } else {
@@ -137,46 +137,46 @@ function discardTillNewLine (context: SplitExecutionContext): void {
 function publishStatementInMultiMode (splitOutput: SqlStatement[], currentStatement: SqlStatement): void {
   if (splitOutput.length === 0) {
     splitOutput.push({
-      statement: '',
-      allowMultiStatement: true
+      value: '',
+      supportMulti: true
     })
   }
   const lastSplitResult = splitOutput[splitOutput.length - 1]
-  if (currentStatement.allowMultiStatement) {
-    if (lastSplitResult.allowMultiStatement) {
-      if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
-        lastSplitResult.statement += LINE_FEED
+  if (currentStatement.supportMulti) {
+    if (lastSplitResult.supportMulti) {
+      if (lastSplitResult.value !== '' && !lastSplitResult.value.endsWith(LINE_FEED)) {
+        lastSplitResult.value += LINE_FEED
       }
-      lastSplitResult.statement += currentStatement.statement + SEMICOLON
+      lastSplitResult.value += currentStatement.value + SEMICOLON
     } else {
       splitOutput.push({
-        statement: currentStatement.statement + SEMICOLON,
-        allowMultiStatement: true
+        value: currentStatement.value + SEMICOLON,
+        supportMulti: true
       })
     }
   } else {
     splitOutput.push({
-      statement: currentStatement.statement,
-      allowMultiStatement: false
+      value: currentStatement.value,
+      supportMulti: false
     })
   }
 }
 
 function publishStatement (context: SplitExecutionContext): void {
-  const trimmed = context.currentStatement.statement.trim()
+  const trimmed = context.currentStatement.value.trim()
   if (trimmed !== '') {
     if (!context.multipleStatements) {
       context.output.push({
-        statement: trimmed,
-        allowMultiStatement: context.currentStatement.allowMultiStatement
+        value: trimmed,
+        supportMulti: context.currentStatement.supportMulti
       })
     } else {
-      context.currentStatement.statement = trimmed
+      context.currentStatement.value = trimmed
       publishStatementInMultiMode(context.output, context.currentStatement)
     }
   }
-  context.currentStatement.statement = ''
-  context.currentStatement.allowMultiStatement = true
+  context.currentStatement.value = ''
+  context.currentStatement.supportMulti = true
 }
 
 function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: FindExpResult): void {
@@ -246,8 +246,8 @@ export function split (sql: string, options?: SplitOptions): string[] {
     unread: sql,
     currentDelimiter: SEMICOLON,
     currentStatement: {
-      statement: '',
-      allowMultiStatement: true
+      value: '',
+      supportMulti: true
     },
     output: []
   }
@@ -267,5 +267,5 @@ export function split (sql: string, options?: SplitOptions): string[] {
     }
   } while (context.unread !== '')
   publishStatement(context)
-  return context.output.map(v => v.statement)
+  return context.output.map(v => v.value)
 }
