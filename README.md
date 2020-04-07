@@ -134,11 +134,13 @@ Below are some modules found to be related to the goal of this module during dev
 - [exec-sql]: Execute MySQL SQL files in directories.
 - [execsql]: Execute you *.sql file which contains multiple sql statements.
 - [sql-ast]: Parse the output of mysqldump into an AST.
+- [sql-parser][4]: A SQL parser written in pure JS.
 
 
 [1]: https://github.com/mysqljs/mysql/issues/1683
 [2]: https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql-pass.ts
 [3]: https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts
+[4]: https://github.com/forward/sql-parser
 [Build status]: https://github.com/VeryCrazyDog/mysql-parser/workflows/Node.js%20CI/badge.svg
 [Build workflow]: https://github.com/VeryCrazyDog/mysql-parser/actions?query=workflow%3A%22Node.js+CI%22
 [execsql]: https://www.npmjs.com/package/execsql
