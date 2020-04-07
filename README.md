@@ -21,8 +21,8 @@ const mysqlParser = require('@verycrazydog/mysql-parser')
 const splitResult = mysqlParser.split(`
   -- Comment is removed
   SELECT 1;
-  DELIMITER $$
-  SELECT 2$$
+  DELIMITER ;;
+  SELECT 2;;
   DELIMITER ;
   SELECT 3;
 `)
@@ -36,8 +36,8 @@ const mysqlParser = require('@verycrazydog/mysql-parser')
 const splitResult = mysqlParser.split(`
   SELECT 1;
   SELECT 2;
-  DELIMITER ;;
-  SELECT 3;;
+  DELIMITER $$
+  SELECT 3$$
   DELIMITER ;
   SELECT 4;
 `, { multipleStatements: true })
