@@ -134,43 +134,46 @@ function discardTillNewLine (context: SplitExecutionContext): void {
   discard(context, findResult.expIndex)
 }
 
-function appendStatement (splitResult: SqlStatement[], currentStatement: string): void {
-  if (splitResult.length === 0) {
-    splitResult.push({
-      statement: '',
-      allowMultiStatement: true
-    })
-  }
-  const lastSplitResult = splitResult[splitResult.length - 1]
-  if (lastSplitResult.allowMultiStatement) {
-    if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
-      lastSplitResult.statement += LINE_FEED
-    }
-    lastSplitResult.statement += currentStatement + SEMICOLON
-  } else {
-    splitResult.push({
-      statement: currentStatement + SEMICOLON,
-      allowMultiStatement: true
-    })
-  }
-}
-
 function publishStatement (context: SplitExecutionContext): void {
-  const currentStatement = context.currentStatement.statement.trim()
-  if (currentStatement !== '') {
+  const trimmed = context.currentStatement.statement.trim()
+  if (trimmed !== '') {
     if (!context.multipleStatements) {
       context.output.push({
-        statement: currentStatement,
-        allowMultiStatement: (context.currentDelimiter === SEMICOLON)
+        statement: trimmed,
+        allowMultiStatement: context.currentStatement.allowMultiStatement
       })
     } else {
-      if (context.currentDelimiter === SEMICOLON) {
-        appendStatement(context.output, currentStatement)
-      } else {
+      if (context.output.length === 0) {
         context.output.push({
-          statement: currentStatement,
-          allowMultiStatement: false
+          statement: '',
+          allowMultiStatement: true
         })
+      }
+      const lastSplitResult = context.output[context.output.length - 1]
+      if (lastSplitResult.allowMultiStatement) {
+        if (context.currentStatement.allowMultiStatement) {
+          if (lastSplitResult.statement !== '' && !lastSplitResult.statement.endsWith(LINE_FEED)) {
+            lastSplitResult.statement += LINE_FEED
+          }
+          lastSplitResult.statement += trimmed + SEMICOLON
+        } else {
+          context.output.push({
+            statement: trimmed,
+            allowMultiStatement: false
+          })
+        }
+      } else {
+        if (context.currentStatement.allowMultiStatement) {
+          context.output.push({
+            statement: trimmed + SEMICOLON,
+            allowMultiStatement: true
+          })
+        } else {
+          context.output.push({
+            statement: trimmed,
+            allowMultiStatement: false
+          })
+        }
       }
     }
   }
@@ -189,7 +192,7 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
     case BACKTICK: {
       read(context, findResult.nextIndex)
       const findQuoteResult = findEndQuote(context.unread, findResult.exp)
-      read(context, findQuoteResult.nextIndex)
+      read(context, findQuoteResult.nextIndex, undefined, false)
       break
     }
     case DOUBLE_DASH_COMMENT_START:

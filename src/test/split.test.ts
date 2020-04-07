@@ -200,7 +200,7 @@ test('should ignore invalid delimiter command', t => {
   ])
 })
 
-test.skip('should combine compatible statements', t => {
+test('should combine compatible statements', t => {
   const output = split([
     'SELECT 1;',
     'SELECT 2;',

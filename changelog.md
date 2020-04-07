@@ -6,7 +6,10 @@ and this module adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Fixed
-- `DELIMITER` command with no string follows is now ignored.
+- `DELIMITER` command with no string follows is now ignored in `.split()` API.
+
+## Changed
+- `.split()` API is now combining more compatible statements than before.
 
 ## [1.0.1] - 2020-04-05
 ### Changed
