@@ -5,6 +5,7 @@
 		// Project options
 		"target": "ES2018",
 		"module": "CommonJS",
+		"declaration": true,
 		"rootDir": "./src",
 		"outDir": "./dist",
 		// Advanced
