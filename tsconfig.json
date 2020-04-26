@@ -8,6 +8,8 @@
 		"declaration": true,
 		"rootDir": "./src",
 		"outDir": "./dist",
+		// Module resolution
+		"esModuleInterop": true,
 		// Advanced
 		"forceConsistentCasingInFileNames": true
 	}

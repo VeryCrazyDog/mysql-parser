@@ -1,5 +1,6 @@
 // Setup based on https://github.com/standard/eslint-config-standard-with-typescript
 {
+	"root": true,
 	"extends": "standard-with-typescript",
 	"parserOptions": {
 		"project": "./tsconfig.json"
