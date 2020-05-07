@@ -8,7 +8,7 @@
 	"rules": {
 		"complexity": "error",
 		"max-depth": "error",
-		"max-len": [ "error", { "code": 120 } ],
+		"max-len": [ "error", { "code": 120, "ignoreUrls": true } ],
 		"no-shadow": [ "error", { "builtinGlobals": true } ],
 		"no-var": "error",
 		"prefer-rest-params": "error",

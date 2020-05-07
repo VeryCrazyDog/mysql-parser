@@ -7,7 +7,6 @@ import test from 'ava'
 import { split } from '../index'
 
 // Test cases
-// eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L12
 test('correct split many query', t => {
   const output = split('SELECT * FROM `table1`;SELECT * FROM `table2`;')
@@ -17,7 +16,6 @@ test('correct split many query', t => {
   ])
 })
 
-// eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L21
 test('delete empty query', t => {
   const output = split(';;;\n;;SELECT * FROM `table1`;;;;;SELECT * FROM `table2`;;; ;;;')
@@ -27,7 +25,6 @@ test('delete empty query', t => {
   ])
 })
 
-// eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L30
 test('test double dash comments, with nested and escaped quotes', t => {
   const output = split([
@@ -44,7 +41,6 @@ test('test double dash comments, with nested and escaped quotes', t => {
   ])
 })
 
-// eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L41
 test('test c-style comments, with nested and escaped quotes', t => {
   const output = split([
@@ -57,7 +53,6 @@ test('test c-style comments, with nested and escaped quotes', t => {
   ])
 })
 
-// eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L50
 test('test hash comments, with nested and escaped quotes', t => {
   const output = split([
@@ -74,7 +69,6 @@ test('test hash comments, with nested and escaped quotes', t => {
   ])
 })
 
-// eslint-disable-next-line max-len
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L61
 test('test misc comments, with nested and escaped quotes', t => {
   const output = split([
