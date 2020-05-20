@@ -45,7 +45,19 @@ const splitResult = mysqlParser.split(`
 console.log(JSON.stringify(splitResult))
 ```
 
-A more extensive complete example
+Split into an array of MySQL statement, retaining comments
+```js
+const mysqlParser = require('@verycrazydog/mysql-parser')
+const splitResult = mysqlParser.split(`
+  -- Comment is retained
+  SELECT 1;
+  SELECT 2;
+`)
+// Print [ 'SELECT 1', 'SELECT 2' ]
+console.log(splitResult)
+```
+
+A more extensive example
 ```js
 const util = require('util')
 const mysql = require('mysql')
@@ -135,6 +147,7 @@ Below are some modules found to be related to the goal of this module during dev
 - [execsql]: Execute you *.sql file which contains multiple sql statements.
 - [sql-ast]: Parse the output of mysqldump into an AST.
 - [sql-parser][4]: A SQL parser written in pure JS.
+
 
 
 [1]: https://github.com/mysqljs/mysql/issues/1683
