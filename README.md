@@ -48,12 +48,12 @@ console.log(JSON.stringify(splitResult))
 Split into an array of MySQL statement, retaining comments
 ```js
 const mysqlParser = require('@verycrazydog/mysql-parser')
-const splitResult = mysqlParser.split(`
-  -- Comment is retained
-  SELECT 1;
-  SELECT 2;
-`)
-// Print [ 'SELECT 1', 'SELECT 2' ]
+const splitResult = mysqlParser.split([
+  '-- Comment is retained',
+  'SELECT 1;',
+  'SELECT 2;'
+].join('\n'), { retainComments: true })
+// Print [ '-- Comment is retained\nSELECT 1', 'SELECT 2' ]
 console.log(splitResult)
 ```
 
