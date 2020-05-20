@@ -139,7 +139,7 @@ test('should handle special C style comment ending correctly', t => {
   t.deepEqual(output, ['SELECT 4'])
 })
 
-test('should retain C style comments start with `/*!`', t => {
+test('should always retain C style comments start with `/*!`', t => {
   const input = [
     "SHOW VARIABLES LIKE '%character_set_client%'",
     '/*!40101 SET character_set_client = big5 */',
@@ -149,7 +149,7 @@ test('should retain C style comments start with `/*!`', t => {
   t.deepEqual(output, input)
 })
 
-test('should retain C style comments start with `/*+`', t => {
+test('should always retain C style comments start with `/*+`', t => {
   const input = [
     "SHOW VARIABLES LIKE '%character_set_client%'",
     'SELECT /*+ BKA(t1) */ 1 FROM dual',
@@ -214,6 +214,110 @@ test('should combine compatible statements', t => {
       'SELECT 4;',
       "SELECT '--- 5; ---';",
       'SELECT 6;'
+    ].join('\n')
+  ])
+})
+
+test('should retain double dash comments before statement correctly', t => {
+  const output = split([
+    '-- Comment 1',
+    '-- Comment 2',
+    "SELECT 'Hello world!' message FROM dual;",
+    "SELECT 'Bye world!' message FROM dual;"
+  ].join('\n'), { retainComments: true })
+  t.deepEqual(output, [
+    [
+      '-- Comment 1',
+      '-- Comment 2',
+      "SELECT 'Hello world!' message FROM dual"
+    ].join('\n'),
+    "SELECT 'Bye world!' message FROM dual"
+  ])
+})
+
+test('should retain double dash comments after delimiter correctly', t => {
+  const output = split(
+    "SELECT 'Hello world!' message FROM dual; -- Comment 3",
+    { retainComments: true }
+  )
+  t.deepEqual(output, [
+    "SELECT 'Hello world!' message FROM dual",
+    "-- Comment 3"
+  ])
+})
+
+test('should retain hash comments before statement correctly', t => {
+  const output = split([
+    '#Comment 1',
+    '#Comment 2',
+    "SELECT 'Hello world!' message FROM dual;",
+    "SELECT 'Bye world!' message FROM dual;"
+  ].join('\n'), { retainComments: true })
+  t.deepEqual(output, [
+    [
+      '#Comment 1',
+      '#Comment 2',
+      "SELECT 'Hello world!' message FROM dual"
+    ].join('\n'),
+    "SELECT 'Bye world!' message FROM dual"
+  ])
+})
+
+test('should retain C style comments correctly', t => {
+  const output = split([
+    "SELECT 'Hello world!' message FROM dual /*multicomment*/;",
+    "SELECT 'Bye world!' message FROM dual;"
+  ].join('\n'), { retainComments: true })
+  t.deepEqual(output, [
+    "SELECT 'Hello world!' message FROM dual /*multicomment*/",
+    "SELECT 'Bye world!' message FROM dual"
+  ])
+})
+
+test('should retain mixed style comments correctly', t => {
+  const output = split([
+    "-- Comment 1",
+    "-- Comment 2",
+    "SELECT 'Hello world!' message FROM dual /*multicomment*/; -- Comment 3",
+    "#Comment 4",
+    "SELECT 'Bye world!' message FROM dual",
+    "-- Comment 5",
+    ";"
+  ].join('\n'), { retainComments: true })
+  t.deepEqual(output, [
+    [
+      "-- Comment 1",
+      "-- Comment 2",
+      "SELECT 'Hello world!' message FROM dual /*multicomment*/"
+    ].join('\n'),
+    [
+      "-- Comment 3",
+      "#Comment 4",
+      "SELECT 'Bye world!' message FROM dual",
+      "-- Comment 5"
+    ].join('\n')
+  ])
+})
+
+test('should retain mixed style comments while combine compatible statements correctly', t => {
+  const output = split([
+    "-- Comment 1",
+    "-- Comment 2",
+    "SELECT 'Hello world!' message FROM dual /*multicomment*/; -- Comment 3",
+    "#Comment 4",
+    "SELECT 'Bye world!' message FROM dual",
+    "-- Comment 5",
+    ";"
+  ].join('\n'), { multipleStatements: true, retainComments: true })
+  t.deepEqual(output, [
+    [
+      "-- Comment 1",
+      "-- Comment 2",
+      "SELECT 'Hello world!' message FROM dual /*multicomment*/;",
+      "-- Comment 3",
+      "#Comment 4",
+      "SELECT 'Bye world!' message FROM dual",
+      "-- Comment 5;"
     ].join('\n')
   ])
 })
