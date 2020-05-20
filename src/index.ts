@@ -18,8 +18,7 @@ interface SqlStatement {
   supportMulti: boolean
 }
 
-interface SplitExecutionContext {
-  multipleStatements: boolean
+interface SplitExecutionContext extends Required<SplitOptions> {
   unread: string
   currentDelimiter: string
   currentStatement: SqlStatement
@@ -124,6 +123,11 @@ function read (
   }
 }
 
+function readTillNewLine (context: SplitExecutionContext, checkSemicolon? : boolean): void {
+  const findResult = findExp(context.unread, newLineRegex)
+  read(context, findResult.expIndex, findResult.expIndex, checkSemicolon)
+}
+
 function discard (context: SplitExecutionContext, nextUnreadIndex: number): void {
   if (nextUnreadIndex > 0) {
     context.unread = context.unread.slice(nextUnreadIndex)
@@ -194,10 +198,16 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
       read(context, findQuoteResult.nextIndex, undefined, false)
       break
     }
-    case DOUBLE_DASH_COMMENT_START:
-      read(context, findResult.expIndex, findResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
-      discardTillNewLine(context)
+    case DOUBLE_DASH_COMMENT_START: {
+      if (context.retainComments) {
+        read(context, findResult.nextIndex)
+        readTillNewLine(context, false)
+      } else {
+        read(context, findResult.expIndex, findResult.expIndex + DOUBLE_DASH_COMMENT_START.length)
+        discardTillNewLine(context)
+      }
       break
+    }
     case HASH_COMMENT_START:
       read(context, findResult.expIndex, findResult.nextIndex)
       discardTillNewLine(context)
@@ -240,10 +250,9 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
 
 export function split (sql: string, options?: SplitOptions): string[] {
   options = options ?? {}
-  const multipleStatements = options.multipleStatements ?? false
-
   const context: SplitExecutionContext = {
-    multipleStatements,
+    multipleStatements: options.multipleStatements ?? false,
+    retainComments: options.retainComments ?? false,
     unread: sql,
     currentDelimiter: SEMICOLON,
     currentStatement: {
