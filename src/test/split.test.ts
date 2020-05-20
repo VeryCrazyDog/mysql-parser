@@ -235,6 +235,23 @@ test('should retain double dash comments before statement correctly', t => {
   ])
 })
 
+test('should retain hash comments before statement correctly', t => {
+  const output = split([
+    '#Comment 1',
+    '#Comment 2',
+    "SELECT 'Hello world!' message FROM dual;",
+    "SELECT 'Bye world!' message FROM dual;"
+  ].join('\n'), { retainComments: true })
+  t.deepEqual(output, [
+    [
+      '#Comment 1',
+      '#Comment 2',
+      "SELECT 'Hello world!' message FROM dual"
+    ].join('\n'),
+    "SELECT 'Bye world!' message FROM dual"
+  ])
+})
+
 test.skip('should retain C style comments correctly', t => {
   const output = split([
     "-- Comment 1",
@@ -260,7 +277,7 @@ test.skip('should retain C style comments correctly', t => {
   ])
 })
 
-test.only('should retain double dash comments after delimiter correctly', t => {
+test('should retain double dash comments after delimiter correctly', t => {
   const output = split(
     "SELECT 'Hello world!' message FROM dual; -- Comment 3",
     { retainComments: true }

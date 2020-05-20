@@ -208,10 +208,16 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
       }
       break
     }
-    case HASH_COMMENT_START:
-      read(context, findResult.expIndex, findResult.nextIndex)
-      discardTillNewLine(context)
+    case HASH_COMMENT_START: {
+      if (context.retainComments) {
+        read(context, findResult.nextIndex)
+        readTillNewLine(context, false)
+      } else {
+        read(context, findResult.expIndex, findResult.nextIndex)
+        discardTillNewLine(context)
+      }
       break
+    }
     case C_STYLE_COMMENT_START: {
       if (['!', '+'].includes(context.unread[findResult.nextIndex])) {
         // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
