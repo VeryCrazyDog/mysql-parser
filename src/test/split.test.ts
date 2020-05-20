@@ -235,6 +235,17 @@ test('should retain double dash comments before statement correctly', t => {
   ])
 })
 
+test('should retain double dash comments after delimiter correctly', t => {
+  const output = split(
+    "SELECT 'Hello world!' message FROM dual; -- Comment 3",
+    { retainComments: true }
+  )
+  t.deepEqual(output, [
+    "SELECT 'Hello world!' message FROM dual",
+    "-- Comment 3"
+  ])
+})
+
 test('should retain hash comments before statement correctly', t => {
   const output = split([
     '#Comment 1',
@@ -254,10 +265,21 @@ test('should retain hash comments before statement correctly', t => {
 
 test('should retain C style comments correctly', t => {
   const output = split([
+    "SELECT 'Hello world!' message FROM dual /*multicomment*/;",
+    "SELECT 'Bye world!' message FROM dual;"
+  ].join('\n'), { retainComments: true })
+  t.deepEqual(output, [
+    "SELECT 'Hello world!' message FROM dual /*multicomment*/",
+    "SELECT 'Bye world!' message FROM dual"
+  ])
+})
+
+test('should retain mixed style comments correctly', t => {
+  const output = split([
     "-- Comment 1",
     "-- Comment 2",
     "SELECT 'Hello world!' message FROM dual /*multicomment*/; -- Comment 3",
-    "-- Comment 4",
+    "#Comment 4",
     "SELECT 'Bye world!' message FROM dual",
     "-- Comment 5",
     ";"
@@ -270,20 +292,32 @@ test('should retain C style comments correctly', t => {
     ].join('\n'),
     [
       "-- Comment 3",
-      "-- Comment 4",
+      "#Comment 4",
       "SELECT 'Bye world!' message FROM dual",
       "-- Comment 5"
     ].join('\n')
   ])
 })
 
-test('should retain double dash comments after delimiter correctly', t => {
-  const output = split(
-    "SELECT 'Hello world!' message FROM dual; -- Comment 3",
-    { retainComments: true }
-  )
+test('should retain mixed style comments while combine compatible statements correctly', t => {
+  const output = split([
+    "-- Comment 1",
+    "-- Comment 2",
+    "SELECT 'Hello world!' message FROM dual /*multicomment*/; -- Comment 3",
+    "#Comment 4",
+    "SELECT 'Bye world!' message FROM dual",
+    "-- Comment 5",
+    ";"
+  ].join('\n'), { multipleStatements: true, retainComments: true })
   t.deepEqual(output, [
-    "SELECT 'Hello world!' message FROM dual",
-    "-- Comment 3"
+    [
+      "-- Comment 1",
+      "-- Comment 2",
+      "SELECT 'Hello world!' message FROM dual /*multicomment*/;",
+      "-- Comment 3",
+      "#Comment 4",
+      "SELECT 'Bye world!' message FROM dual",
+      "-- Comment 5;"
+    ].join('\n')
   ])
 })
