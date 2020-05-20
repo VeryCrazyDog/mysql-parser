@@ -7,6 +7,7 @@ and this module adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - Added `.d.ts` declaration files.
+- Added new option `retainComments` in `.split()` API.
 
 ## [1.1.0] - 2020-04-07
 ### Fixed

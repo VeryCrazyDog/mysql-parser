@@ -252,7 +252,7 @@ test('should retain hash comments before statement correctly', t => {
   ])
 })
 
-test.skip('should retain C style comments correctly', t => {
+test('should retain C style comments correctly', t => {
   const output = split([
     "-- Comment 1",
     "-- Comment 2",
@@ -269,7 +269,7 @@ test.skip('should retain C style comments correctly', t => {
       "SELECT 'Hello world!' message FROM dual /*multicomment*/"
     ].join('\n'),
     [
-      " -- Comment 3",
+      "-- Comment 3",
       "-- Comment 4",
       "SELECT 'Bye world!' message FROM dual",
       "-- Comment 5"

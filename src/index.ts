@@ -219,7 +219,7 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
       break
     }
     case C_STYLE_COMMENT_START: {
-      if (['!', '+'].includes(context.unread[findResult.nextIndex])) {
+      if (['!', '+'].includes(context.unread[findResult.nextIndex]) || context.retainComments) {
         // Should not be skipped, see https://dev.mysql.com/doc/refman/5.7/en/comments.html
         read(context, findResult.nextIndex)
         const findCommentResult = findExp(context.unread, cStyleCommentEndRegex)
