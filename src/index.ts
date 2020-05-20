@@ -10,6 +10,7 @@ const DELIMITER_KEYWORD = 'DELIMITER'
 
 export interface SplitOptions {
   multipleStatements?: boolean
+  retainComments?: boolean
 }
 
 interface SqlStatement {

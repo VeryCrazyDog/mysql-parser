@@ -217,3 +217,57 @@ test('should combine compatible statements', t => {
     ].join('\n')
   ])
 })
+
+test.skip('should retain double dash comments before statement correctly', t => {
+  const output = split([
+    '-- Comment 1',
+    '-- Comment 2',
+    "SELECT 'Hello world!' message FROM dual;",
+    "SELECT 'Bye world!' message FROM dual;"
+  ].join('\n'), { retainComments: true })
+  t.deepEqual(output, [
+    [
+      '-- Comment 1',
+      '-- Comment 2',
+      "SELECT 'Hello world!' message FROM dual;"
+    ].join('\n'),
+    "SELECT 'Bye world!' message FROM dual;"
+  ])
+})
+
+test.skip('should retain C style comments correctly', t => {
+  const output = split([
+    "-- Comment 1",
+    "-- Comment 2",
+    "SELECT 'Hello world!' message FROM dual /*multicomment*/; -- Comment 3",
+    "-- Comment 4",
+    "SELECT 'Bye world!' message FROM dual",
+    "-- Comment 5",
+    ";"
+  ].join('\n'), { retainComments: true })
+  t.deepEqual(output, [
+    [
+      "-- Comment 1",
+      "-- Comment 2",
+      "SELECT 'Hello world!' message FROM dual /*multicomment*/;"
+    ].join('\n'),
+    [
+      " -- Comment 3",
+      "-- Comment 4",
+      "SELECT 'Bye world!' message FROM dual",
+      "-- Comment 5",
+      ";"
+    ].join('\n')
+  ])
+})
+
+test.skip('should retain double dash comments after delimiter correctly', t => {
+  const output = split(
+    "SELECT 'Hello world!' message FROM dual; -- Comment 3",
+    { retainComments: true }
+  )
+  t.deepEqual(output, [
+    "SELECT 'Hello world!' message FROM dual;",
+    " -- Comment 3"
+  ])
+})
