@@ -1,13 +1,16 @@
 {
+	// TSConfig reference: https://www.typescriptlang.org/tsconfig
+	// Configured based on https://stackoverflow.com/a/57607634/1131246
 	"compilerOptions": {
 		// Strict checks
 		"strict": true,
 		// Project options
-		"target": "ES2018",
-		"module": "CommonJS",
 		"declaration": true,
-		"rootDir": "./src",
-		"outDir": "./dist",
+		"lib": [ "ES2018" ],
+		"module": "CommonJS",
+		"outDir": "dist",
+		"rootDir": "src",
+		"target": "ES2018",
 		// Module resolution
 		"esModuleInterop": true,
 		// Advanced
