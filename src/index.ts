@@ -106,13 +106,10 @@ function read (
   context: SplitExecutionContext,
   readToIndex: number,
   nextUnreadIndex?: number,
-  checkSemicolon? : boolean
+  checkSemicolon?: boolean
 ): void {
-  if (checkSemicolon === undefined) {
-    checkSemicolon = true
-  }
   const readContent = context.unread.slice(0, readToIndex)
-  if (checkSemicolon && readContent.includes(SEMICOLON)) {
+  if ((checkSemicolon ?? true) && readContent.includes(SEMICOLON)) {
     context.currentStatement.supportMulti = false
   }
   context.currentStatement.value += readContent
@@ -123,7 +120,7 @@ function read (
   }
 }
 
-function readTillNewLine (context: SplitExecutionContext, checkSemicolon? : boolean): void {
+function readTillNewLine (context: SplitExecutionContext, checkSemicolon?: boolean): void {
   const findResult = findExp(context.unread, newLineRegex)
   read(context, findResult.expIndex, findResult.expIndex, checkSemicolon)
 }
@@ -255,10 +252,9 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
 }
 
 export function split (sql: string, options?: SplitOptions): string[] {
-  options = options ?? {}
   const context: SplitExecutionContext = {
-    multipleStatements: options.multipleStatements ?? false,
-    retainComments: options.retainComments ?? false,
+    multipleStatements: options?.multipleStatements ?? false,
+    retainComments: options?.retainComments ?? false,
     unread: sql,
     currentDelimiter: SEMICOLON,
     currentStatement: {
