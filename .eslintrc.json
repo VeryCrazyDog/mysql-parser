@@ -2,8 +2,6 @@
 {
 	"root": true,
 	"extends": "standard-with-typescript",
-	"parserOptions": { "project": "tsconfig.json" },
-	"ignorePatterns": [ "/dist/" ],
 	"rules": {
 		// Rules to avoid potential bugs and unintended behavior
 		"@typescript-eslint/no-shadow": [ "error", { "builtinGlobals": true } ],
@@ -24,13 +22,5 @@
 		"import/no-default-export": "error",
 		"import/order": [ "error", { "newlines-between": "always" } ],
 		"sort-imports": [ "error", { "ignoreDeclarationSort": true } ]
-	},
-	"overrides": [
-		{
-			"files": [ "src/test/**/*.test.ts" ],
-			"rules": {
-				"@typescript-eslint/no-non-null-assertion": "off"
-			}
-		}
-	]
+	}
 }

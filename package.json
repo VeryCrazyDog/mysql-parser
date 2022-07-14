@@ -18,9 +18,9 @@
 		"typescript": "^4.4.4"
 	},
 	"scripts": {
-		"lint": "eslint --ext .ts *.cjs . || cd .",
-		"fix": "eslint --ext .ts --fix *.cjs . || cd .",
-		"build": "tsc",
+		"lint": "eslint *.cjs src test",
+		"fix": "eslint --fix *.cjs src test",
+		"build": "tsc --build src",
 		"test": "ava",
 		"prepack": "npm run build"
 	},

@@ -6,7 +6,7 @@ import { promises as fs } from 'fs'
 import test from 'ava'
 
 // Import module to be tested
-import { split } from '../index'
+import { split } from '../src/index'
 
 // Variables
 let statements: string[]

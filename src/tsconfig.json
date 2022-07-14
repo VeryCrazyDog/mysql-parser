@@ -1,0 +1,10 @@
+{
+	// Configured based on https://stackoverflow.com/questions/51631786/how-to-use-project-references-in-typescript-3-0
+	"extends": "../tsconfig-base.json",
+	"compilerOptions": {
+		// Modules options
+		"rootDir": ".",
+		// Emit options
+		"outDir": "../dist"
+	}
+}

@@ -1,0 +1,20 @@
+{
+	// TSConfig reference: https://www.typescriptlang.org/tsconfig
+	// Configured based on https://stackoverflow.com/a/57607634/1131246
+	"compilerOptions": {
+		// Type checking options
+		"strict": true,
+		// Modules options
+		"module": "CommonJS",
+		// Emit options
+		"declaration": true,
+		// Interop constraints options
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		// Language and environment options
+		"lib": [ "ES2018" ],
+		"target": "ES2018",
+		// Completeness options
+		"skipLibCheck": true
+	}
+}

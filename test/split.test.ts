@@ -4,7 +4,7 @@
 import test from 'ava'
 
 // Import module to be tested
-import { split } from '../index'
+import { split } from '../src/index'
 
 // Test cases
 // https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts#L12

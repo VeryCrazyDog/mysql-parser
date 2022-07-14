@@ -2,6 +2,5 @@
 .eslintrc.json
 .github
 ava.config.cjs
-dist/test/
 doc/
-src/test/
+test/
