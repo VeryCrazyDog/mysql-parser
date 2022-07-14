@@ -3,7 +3,8 @@
 	"version": "1.2.0",
 	"description": "Parser for MySQL statements",
 	"engines": {
-		"node": ">= 10"
+		"node": ">= 10",
+		"npm": ">= 8"
 	},
 	"main": "dist/index.js",
 	"devDependencies": {
