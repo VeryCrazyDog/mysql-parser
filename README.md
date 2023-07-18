@@ -154,8 +154,8 @@ Below are some modules found to be related to the goal of this module during dev
 [2]: https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql-pass.ts
 [3]: https://github.com/Bajdzis/vscode-database/blob/1cbe33bd63330d08c931fc8ef46d199f0c8ae597/src/extension/engine/mysql.spec.ts
 [4]: https://github.com/forward/sql-parser
-[Build status]: https://github.com/VeryCrazyDog/mysql-parser/workflows/Node.js%20CI/badge.svg
-[Build workflow]: https://github.com/VeryCrazyDog/mysql-parser/actions?query=workflow%3A%22Node.js+CI%22
+[Build status]: https://github.com/VeryCrazyDog/mysql-parser/workflows/CI/badge.svg
+[Build workflow]: https://github.com/VeryCrazyDog/mysql-parser/actions?query=workflow%3A%22CI%22
 [execsql]: https://www.npmjs.com/package/execsql
 [exec-sql]: https://www.npmjs.com/package/exec-sql
 [mysqljs/mysql]: https://github.com/mysqljs/mysql
