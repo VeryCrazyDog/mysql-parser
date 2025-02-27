@@ -182,7 +182,8 @@ function publishStatement (context: SplitExecutionContext): void {
 }
 
 function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: FindExpResult): void {
-  switch (findResult.exp?.trim()) {
+  // ignore case of delimiter command
+  switch (findResult.exp?.trim().toUpperCase()) {
     case context.currentDelimiter:
       read(context, findResult.expIndex, findResult.nextIndex)
       publishStatement(context)
