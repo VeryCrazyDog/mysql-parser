@@ -321,3 +321,23 @@ test('should retain mixed style comments while combine compatible statements cor
     ].join('\n')
   ])
 })
+
+test('should ignore case of statements', t => {
+  const output = split([
+    "delimiter $$",
+    "select 1$$",
+    "dElImitER ;;",
+    "sElEcT 2;;",
+    "DELIMITER ;",
+    "SELECT 3;",
+  ].join('\n'), { multipleStatements: true, retainComments: true })
+  t.deepEqual(output, [
+    [
+      "select 1;",
+      "sElEcT 2;",
+      "SELECT 3;"
+    ].join('\n')
+  ])
+})
+
+
