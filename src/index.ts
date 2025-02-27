@@ -86,7 +86,7 @@ function findExp (content: string, regex: RegExp): FindExpResult {
 }
 
 function findKeyToken (content: string, currentDelimiter: string): FindExpResult {
-  let regex
+  let regex: RegExp
   if (currentDelimiter === SEMICOLON) {
     regex = semicolonKeyTokenRegex
   } else {
@@ -269,7 +269,7 @@ export function split (sql: string, options?: SplitOptions): string[] {
     exp: null,
     nextIndex: 0
   }
-  let lastUnreadLength
+  let lastUnreadLength: number
   do {
     lastUnreadLength = context.unread.length
     findResult = findKeyToken(context.unread, context.currentDelimiter)
