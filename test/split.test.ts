@@ -329,7 +329,7 @@ test('should ignore case of statements', t => {
     "dElImitER ;;",
     "sElEcT 2;;",
     "DELIMITER ;",
-    "SELECT 3;",
+    "SELECT 3;"
   ].join('\n'), { multipleStatements: true, retainComments: true })
   t.deepEqual(output, [
     [
@@ -339,5 +339,3 @@ test('should ignore case of statements', t => {
     ].join('\n')
   ])
 })
-
-
