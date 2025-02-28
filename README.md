@@ -57,6 +57,24 @@ const splitResult = mysqlParser.split([
 console.log(splitResult)
 ```
 
+Include orginal positions from where the statement was parsed
+```js
+const mysqlParser = require('@verycrazydog/mysql-parser')
+const splitResult = mysqlParser.split([
+  'delimiter $$',
+  'SELECT 1$$',
+  'delimiter ;',
+  'SELECT 2;'
+].join('\n'), { includePositions: true })
+// Print
+// [
+//   { stmt: "SELECT 1", start: 12, end: 23 },
+//   { stmt: "SELECT 2", start: 35, end: 45 }
+// ]
+// 
+console.log(splitResult)
+```
+
 A more extensive example
 ```js
 const util = require('util')
