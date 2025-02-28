@@ -6,10 +6,10 @@ import { promises as fs } from 'fs'
 import test from 'ava'
 
 // Import module to be tested
-import { split } from '../src/index'
+import { split, SqlStatementResult } from '../src/index'
 
 // Variables
-let statements: string[]
+let statements: SqlStatementResult[]
 
 // Initialize
 test.before(async () => {
