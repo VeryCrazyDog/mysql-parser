@@ -184,7 +184,7 @@ function publishStatement (context: SplitExecutionContext): void {
     } else {
       context.currentStatement.value = trimmed
       context.currentStatement.end = context.unreadSourceFileIndex
-      publishStatementInMultiMode(context.output, context.currentStatement, context.unreadSourceFileIndex, context.includeOriginalSourceFileIndices)
+      publishStatementInMultiMode(context.output, context.currentStatement, context.unreadSourceFileIndex)
     }
   }
   // Reset current statement for the next statement.
@@ -279,7 +279,8 @@ export function split (sql: string, options?: SplitOptions): string[] {
     currentStatement: {
       value: '',
       supportMulti: true,
-      start: 0
+      start: 0,
+      end: 0
     },
     output: []
   }
@@ -312,7 +313,8 @@ export function splitIncludeSourceMap (sql: string, options?: SplitOptions): Sql
     currentStatement: {
       value: '',
       supportMulti: true,
-      start: 0
+      start: 0,
+      end: 0
     },
     output: []
   }

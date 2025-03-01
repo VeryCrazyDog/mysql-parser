@@ -9,7 +9,7 @@ import test from 'ava'
 import { split, SqlStatementResult } from '../src/index'
 
 // Variables
-let statements: SqlStatementResult[]
+let statements: string[]
 
 // Initialize
 test.before(async () => {

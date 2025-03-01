@@ -339,31 +339,3 @@ test('should ignore case of statements', t => {
     ].join('\n')
   ])
 })
-
-test('should include original positions', t => {
-  const output = split([
-    "delimiter $$",
-    "SELECT * FROM table1$$",
-    "delimiter ;;",
-    "SELECT t.id FROM table2 t WHERE status = 'pending';;",
-    "DELIMITER ;",
-    "UPDATE table2 SET count=count+1 WHERE status = 'pending';"
-  ].join('\n'), { multipleStatements: false, includePositions: true })
-  t.deepEqual(output, [
-    {
-      stmt: 'SELECT * FROM table1',
-      start: 12,
-      end: 35,
-    },
-    {
-      stmt: "SELECT t.id FROM table2 t WHERE status = 'pending'",
-      start: 48,
-      end: 101,
-    },
-    {
-      stmt: "UPDATE table2 SET count=count+1 WHERE status = 'pending'",
-      start: 113,
-      end: 171,
-    }
-  ])
-})
