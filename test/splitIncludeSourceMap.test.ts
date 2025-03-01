@@ -14,7 +14,7 @@ test('should include original positions', t => {
       "SELECT t.id FROM table2 t WHERE status = 'pending';;",
       "DELIMITER ;",
       "UPDATE table2 SET count=count+1 WHERE status = 'pending';"
-    ].join('\n'), { multipleStatements: false })
+    ].join('\n'))
     t.deepEqual(output, [
       {
         stmt: 'SELECT * FROM table1',
