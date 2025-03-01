@@ -117,6 +117,24 @@ const ENABLE_MULTI_STATEMENT = true
 })()
 ```
 
+Include orginal positions from where the statement was parsed
+```js
+const mysqlParser = require('@verycrazydog/mysql-parser')
+const splitResult = mysqlParser.splitIncludeSourceMap([
+  'delimiter $$',
+  'SELECT 1$$',
+  'delimiter ;',
+  'SELECT 2;'
+].join('\n'))
+// Print
+// [
+//   { stmt: "SELECT 1", start: 12, end: 23 },
+//   { stmt: "SELECT 2", start: 35, end: 45 }
+// ]
+// 
+console.log(splitResult)
+```
+
 
 ## Limitation
 Some limitations of this module which are currently not addressed:

@@ -16,10 +16,13 @@ export interface SplitOptions {
 interface SqlStatement {
   value: string
   supportMulti: boolean
+  start: number
+  end: number
 }
 
 interface SplitExecutionContext extends Required<SplitOptions> {
   unread: string
+  unreadSourceFileIndex: number
   currentDelimiter: string
   currentStatement: SqlStatement
   output: SqlStatement[]
@@ -113,11 +116,15 @@ function read (
     context.currentStatement.supportMulti = false
   }
   context.currentStatement.value += readContent
+  let consumed = 0
   if (nextUnreadIndex !== undefined && nextUnreadIndex > 0) {
+    consumed = nextUnreadIndex
     context.unread = context.unread.slice(nextUnreadIndex)
   } else {
+    consumed = readToIndex
     context.unread = context.unread.slice(readToIndex)
   }
+  context.unreadSourceFileIndex += consumed
 }
 
 function readTillNewLine (context: SplitExecutionContext, checkSemicolon?: boolean): void {
@@ -128,6 +135,7 @@ function readTillNewLine (context: SplitExecutionContext, checkSemicolon?: boole
 function discard (context: SplitExecutionContext, nextUnreadIndex: number): void {
   if (nextUnreadIndex > 0) {
     context.unread = context.unread.slice(nextUnreadIndex)
+    context.unreadSourceFileIndex += nextUnreadIndex
   }
 }
 
@@ -136,12 +144,14 @@ function discardTillNewLine (context: SplitExecutionContext): void {
   discard(context, findResult.expIndex)
 }
 
-function publishStatementInMultiMode (splitOutput: SqlStatement[], currentStatement: SqlStatement): void {
+function publishStatementInMultiMode (
+  splitOutput: SqlStatement[],
+  currentStatement: SqlStatement,
+  currentPos: number
+): void {
   if (splitOutput.length === 0) {
-    splitOutput.push({
-      value: '',
-      supportMulti: true
-    })
+    let stmt: SqlStatement = { value: '', supportMulti: true, start: currentStatement.start, end: currentPos }
+    splitOutput.push(stmt)
   }
   const lastSplitResult = splitOutput[splitOutput.length - 1]
   if (currentStatement.supportMulti) {
@@ -150,17 +160,14 @@ function publishStatementInMultiMode (splitOutput: SqlStatement[], currentStatem
         lastSplitResult.value += LINE_FEED
       }
       lastSplitResult.value += currentStatement.value + SEMICOLON
+      lastSplitResult.end = currentPos
     } else {
-      splitOutput.push({
-        value: currentStatement.value + SEMICOLON,
-        supportMulti: true
-      })
+      let stmt: SqlStatement = { value: currentStatement.value + SEMICOLON, supportMulti: true, start: currentStatement.start, end: currentPos }
+      splitOutput.push(stmt)
     }
   } else {
-    splitOutput.push({
-      value: currentStatement.value,
-      supportMulti: false
-    })
+    let stmt: SqlStatement = { value: currentStatement.value, supportMulti: false, start: currentStatement.start, end: currentPos }
+    splitOutput.push(stmt)
   }
 }
 
@@ -170,15 +177,20 @@ function publishStatement (context: SplitExecutionContext): void {
     if (!context.multipleStatements) {
       context.output.push({
         value: trimmed,
-        supportMulti: context.currentStatement.supportMulti
+        supportMulti: context.currentStatement.supportMulti,
+        start: context.currentStatement.start,
+        end: context.unreadSourceFileIndex
       })
     } else {
       context.currentStatement.value = trimmed
-      publishStatementInMultiMode(context.output, context.currentStatement)
+      context.currentStatement.end = context.unreadSourceFileIndex
+      publishStatementInMultiMode(context.output, context.currentStatement, context.unreadSourceFileIndex)
     }
   }
+  // Reset current statement for the next statement.
   context.currentStatement.value = ''
   context.currentStatement.supportMulti = true
+  context.currentStatement.start = context.unreadSourceFileIndex
 }
 
 function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: FindExpResult): void {
@@ -230,15 +242,18 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
       break
     }
     case DELIMITER_KEYWORD: {
-      read(context, findResult.expIndex, findResult.nextIndex)
       // MySQL client will return `DELIMITER cannot contain a backslash character` if backslash is used
       // Shall we reject backslash as well?
+      // Instead of appending the delimiter command text, discard it.
+      discard(context, findResult.nextIndex)
       const matched = context.unread.match(delimiterTokenRegex)
       if (matched?.index !== undefined) {
         context.currentDelimiter = matched[0].trim()
         discard(context, matched[0].length)
       }
       discardTillNewLine(context)
+      // Reset the start position for the next statement so that the delimiter command is not included.
+      context.currentStatement.start = context.unreadSourceFileIndex
       break
     }
     case undefined:
@@ -252,15 +267,20 @@ function handleKeyTokenFindResult (context: SplitExecutionContext, findResult: F
   }
 }
 
+export type SqlStatementResult = { stmt: string, start: number, end: number };
+
 export function split (sql: string, options?: SplitOptions): string[] {
   const context: SplitExecutionContext = {
     multipleStatements: options?.multipleStatements ?? false,
     retainComments: options?.retainComments ?? false,
     unread: sql,
+    unreadSourceFileIndex: 0,
     currentDelimiter: SEMICOLON,
     currentStatement: {
       value: '',
-      supportMulti: true
+      supportMulti: true,
+      start: 0,
+      end: 0
     },
     output: []
   }
@@ -281,4 +301,38 @@ export function split (sql: string, options?: SplitOptions): string[] {
   } while (context.unread !== '')
   publishStatement(context)
   return context.output.map(v => v.value)
+}
+
+export function splitIncludeSourceMap (sql: string, options?: SplitOptions): SqlStatementResult[] {
+  const context: SplitExecutionContext = {
+    multipleStatements: options?.multipleStatements ?? false,
+    retainComments: options?.retainComments ?? false,
+    unread: sql,
+    unreadSourceFileIndex: 0,
+    currentDelimiter: SEMICOLON,
+    currentStatement: {
+      value: '',
+      supportMulti: true,
+      start: 0,
+      end: 0
+    },
+    output: []
+  }
+  let findResult: FindExpResult = {
+    expIndex: -1,
+    exp: null,
+    nextIndex: 0
+  }
+  let lastUnreadLength: number
+  do {
+    lastUnreadLength = context.unread.length
+    findResult = findKeyToken(context.unread, context.currentDelimiter)
+    handleKeyTokenFindResult(context, findResult)
+    // Prevent infinite loop by returning incorrect result
+    if (lastUnreadLength === context.unread.length) {
+      read(context, context.unread.length)
+    }
+  } while (context.unread !== '')
+  publishStatement(context)
+  return context.output.map(v => ({ stmt: v.value, start: v.start!, end: v.end! }))
 }
