@@ -17,8 +17,8 @@ export interface SplitOptions {
 interface SqlStatement {
   value: string
   supportMulti: boolean
-  start?: number
-  end?: number
+  start: number
+  end: number
 }
 
 interface SplitExecutionContext extends Required<SplitOptions> {
